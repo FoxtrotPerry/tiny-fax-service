@@ -1,0 +1,12 @@
+[Unit]
+Description=tiny-fax: Token refresh timer
+After=network-online.target
+Wants=network-online.target
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=12hr
+Unit=tf_refresh.service
+
+[Install]
+WantedBy=timers.target

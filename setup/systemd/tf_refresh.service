@@ -1,0 +1,9 @@
+[Unit]
+Description=tiny-fax: Token refresh service
+Wants=tf_refresh.timer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/tiny-fax/tf_refresh

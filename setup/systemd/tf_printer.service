@@ -1,0 +1,15 @@
+[Unit]
+Description=tiny-fax: Token refresh service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/opt/tiny-fax/tf_printer
+Restart=always
+RestartSec=5
+WorkingDirectory=/path/to/working-directory
+StandardOutput=append:/opt/tiny-fax/logs/printer.log
+StandardError=append:/opt/tiny-fax/logs/printer_errors.log
+
+[Install]
+WantedBy=multi-user.target
