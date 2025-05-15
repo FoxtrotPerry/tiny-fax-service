@@ -1,10 +1,14 @@
 import type { MessageQuery } from "./types/message";
 import { TinyFaxSocket } from "./classes/tinyFaxSocket";
+import { env } from "./env";
+import axios, { AxiosError } from "axios";
+import type { Room } from "./types/room";
+import { TinyFaxPrinter } from "./classes/tinyFaxPrinter";
 
-const PRINTER_DEFAULT_IP = "192.168.1.87";
-const PRINTER_DEFAULT_PORT = 9100;
+const printerIp = env.TF_PRINTER_IP ?? "192.168.1.87";
+const printerPort = Number.parseInt(env.TF_PRINTER_PORT ?? "") ?? 9100;
 
-/**
+/*
  * Check for required keys
  */
 
@@ -18,13 +22,11 @@ if (!fileExists) {
 
 const contents = await file.json();
 
-/**
+/*
  * Check for required env vars
  */
 
-const accessUrl = process.env.TF_ACCESS_URL;
-let printerIp = process.env.TF_PRINTER_IP;
-let printerPort = Number.parseInt(process.env.TF_PRINTER_PORT ?? "");
+const accessUrl = env.TF_API_URL;
 
 if (!contents?.accessToken || typeof contents.accessToken !== "string") {
   console.error("TF: ACCESS TOKEN NOT FOUND");
@@ -34,39 +36,56 @@ if (!contents?.accessToken || typeof contents.accessToken !== "string") {
 // can now safely assign accessToken
 const accessToken = contents.accessToken as string;
 
-if (!accessUrl) {
-  console.error("TF: TF_ACCESS_URL ENV VAR NOT FOUND");
+/*
+ * Get the user's available rooms
+ */
+
+let rooms: Room[] = [];
+
+try {
+  const availableRooms = await axios.get<Room[]>(`${accessUrl}/room`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  rooms = availableRooms.data;
+} catch (error: unknown) {
+  if (error instanceof AxiosError) {
+    console.error("TF: Failed to get available rooms!");
+    console.error(error.status, error.response?.data);
+    process.exit(1);
+  }
+}
+
+if (rooms.length === 0) {
+  console.error("TF: No rooms found for user!");
   process.exit(1);
 }
 
-if (!printerIp) {
-  console.log(
-    `TF: TF_PRINTER_IP NOT FOUND, USING DEFAULT (${PRINTER_DEFAULT_IP})`
-  );
-  printerIp = PRINTER_DEFAULT_IP;
-}
-
-if (Number.isNaN(printerPort)) {
-  console.log(
-    `TF: TF_PRINTER_PORT NOT FOUND, USING DEFAULT (${PRINTER_DEFAULT_PORT})`
-  );
-  printerPort = PRINTER_DEFAULT_PORT;
-}
-
-/**
+/*
  * Connect to the chat server
  */
 
-const params = new URLSearchParams({
-  roomId: "berlin",
-} satisfies MessageQuery);
-const url = new URL(`${accessUrl}?${params.toString()}`);
+// TODO: Could possible create just one TinyFaxPrinter instance and share it across all rooms.
 
-const tinyFaxSocket = new TinyFaxSocket({
-  url,
-  accessToken,
-  printerIp,
-  printerPort,
+const printer = new TinyFaxPrinter({
+  host: printerIp,
+  port: printerPort,
 });
 
-await tinyFaxSocket.connect();
+const roomSockets = rooms.map((room) => {
+  const roomSocket = new TinyFaxSocket({
+    room,
+    accessToken,
+    // printerIp,
+    // printerPort,
+    printer,
+  });
+  return roomSocket;
+});
+
+await Promise.all(
+  roomSockets.map(async (roomSocket) => {
+    await roomSocket.connect();
+  })
+);

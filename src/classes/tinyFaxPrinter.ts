@@ -1,13 +1,21 @@
 import NetworkReceiptPrinter from "@point-of-sale/network-receipt-printer";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 
+// TODO: Strongly consider not using NetworkReceiptPrinter and instead write our own
+
 export class TinyFaxPrinter {
   private printer?: NetworkReceiptPrinter;
   private encoder: ReceiptPrinterEncoder;
   private host: string;
   private port: number;
   private retries = 0;
-  status: "idle" | "connected" | "disconnected" | "error" = "idle";
+  status:
+    | "idle"
+    | "connecting"
+    | "connected"
+    | "disconnected"
+    | "error"
+    | "timeout" = "idle";
 
   constructor({ host, port }: { host: string; port: number }) {
     this.host = host;
@@ -18,9 +26,19 @@ export class TinyFaxPrinter {
   }
 
   connect() {
+    if (this.status === "connected") {
+      console.log("🖨️  Already connected to printer.");
+      return;
+    }
+    if (this.status === "connecting") {
+      console.log("🖨️  Already connecting to printer.");
+      return;
+    }
+
     this.printer = new NetworkReceiptPrinter({
       host: this.host,
       port: this.port,
+      timeout: 0,
     });
 
     this.printer.addEventListener("connected", () => {
@@ -33,11 +51,40 @@ export class TinyFaxPrinter {
       console.log("❌ Printer disconnected.");
     });
 
-    try {
-      this.printer.connect();
-    } catch (error) {
-      this.status = "error";
-      console.error("Error connecting to printer:", error);
+    // this.printer.addEventListener("error", (e) => {
+    //   this.status = "error";
+    //   console.error("❌ Printer connection error:", e);
+    // });
+
+    // this.printer.addEventListener("timeout", () => {
+    //   this.status = "timeout";
+    //   console.error("⌛️ Printer connection timed out");
+    // });
+
+    this.printer.connect();
+    this.status = "connecting";
+
+    // try {
+    //   this.printer.connect();
+    // } catch (error) {
+    //   this.status = "error";
+    // }
+  }
+
+  disconnect() {
+    if (this.printer) {
+      this.printer.disconnect();
+      this.status = "disconnected";
+      console.log("🖨️  Disconnected from printer.");
+    }
+  }
+
+  reconnect() {
+    if (this.printer) {
+      this.printer.disconnect();
+      this.status = "disconnected";
+      console.log("🖨️  Reconnecting to printer...");
+      this.connect();
     }
   }
 

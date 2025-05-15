@@ -3,7 +3,7 @@ declare module "@point-of-sale/network-receipt-printer" {
     constructor(options?: ReceiptPrinterOptions);
 
     addEventListener(
-      event: "connected",
+      event: "connected" | "disconnected",
       callback: (device: { type: "network" }) => void
     );
 
@@ -19,6 +19,7 @@ declare module "@point-of-sale/network-receipt-printer" {
   interface NetworkReceiptPrinterOptions {
     host: `${string}.${string}.${string}.${string}`;
     port: number;
+    // timeout?: number;
   }
 }
 

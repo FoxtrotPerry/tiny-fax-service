@@ -6,6 +6,7 @@
  */
 
 import axios from "axios";
+import { env } from "./env";
 
 // constants
 
@@ -56,7 +57,7 @@ if (fileExists) {
 
 // if we've gotten here, a token refresh is required
 
-const refreshResp = await axios.post("http://localhost:4000/token/refresh", {
+const refreshResp = await axios.post(`${env.TF_API_URL}/token/refresh`, {
   refreshToken,
 });
 

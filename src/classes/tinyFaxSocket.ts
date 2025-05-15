@@ -1,30 +1,44 @@
+import { env } from "../env";
 import type { MessageBody } from "../types/message";
+import type { Room } from "../types/room";
 import { TinyFaxPrinter } from "./tinyFaxPrinter";
 
 export class TinyFaxSocket {
+  private roomName: string;
   private socket: WebSocket | null = null;
-  private url: URL;
+  private url: string;
   private accessToken: string;
   private printer: TinyFaxPrinter;
   isConnected = false;
 
   constructor({
-    url,
+    room,
     accessToken,
     printerIp,
     printerPort,
+    printer,
   }: {
-    url: URL;
+    room: Room;
     accessToken: string;
-    printerIp: string;
-    printerPort: number;
+    printerIp?: string;
+    printerPort?: number;
+    printer?: TinyFaxPrinter;
   }) {
-    this.url = url;
+    this.url = `${env.TF_API_URL}/room?roomId=${room.id}`;
+    this.roomName = room.name;
     this.accessToken = accessToken;
-    this.printer = new TinyFaxPrinter({
-      host: printerIp,
-      port: printerPort,
-    });
+    if (!printer && printerIp && printerPort) {
+      this.printer = new TinyFaxPrinter({
+        host: printerIp,
+        port: printerPort,
+      });
+    } else if (printer && !printerIp && !printerPort) {
+      this.printer = printer;
+    } else {
+      throw new Error(
+        "Either pass in printer, or printerIp and printerPort to the TinyFaxSocket constructor"
+      );
+    }
   }
 
   async connect() {
@@ -37,20 +51,17 @@ export class TinyFaxSocket {
 
     // We smuggle the JWT through the protocol options because the
     // WebSocket API doesn't allow for custom headers.
-    // FIXME: Config to use actual JWT
     this.socket = new WebSocket(this.url, this.accessToken);
 
     this.socket.addEventListener("open", () => {
       this.isConnected = true;
-      console.log("🌐 Connected to chat server!");
+      console.log(`🌐 Connected to chat room ${this.roomName}`);
       const message = {
         message: "",
         action: "listen",
       } satisfies MessageBody;
       this.socket?.send(JSON.stringify(message));
-      this.printer.printInBox(
-        `Connected to ${this.url.searchParams.get("roomId")}!`
-      );
+      this.printer.printInBox(`Connected to ${this.roomName}!`);
     });
 
     this.socket.addEventListener("message", (event) => {
