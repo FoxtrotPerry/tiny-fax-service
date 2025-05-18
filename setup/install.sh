@@ -83,6 +83,10 @@ info_echo "Making tiny-fax directory at $TF_DIR..."
 mkdir -p $TF_DIR
 cd $TF_DIR
 
+##### Use otp to get auth tokens
+
+curl "https://example.com/api/endpoint?otp=123456" -H "Accept: application/json" -o response.json
+
 ##### Get the latest tiny-fax distribution
 
 info_echo "Downloading latest tiny-fax distribution..."
