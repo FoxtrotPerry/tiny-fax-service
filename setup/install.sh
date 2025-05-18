@@ -97,7 +97,7 @@ curl "https://api.tinyfax.chat/token?otp=$otp" -H "Accept: application/json" -o 
 
 info_echo "Downloading latest tiny-fax distribution..."
 
-wget -q --show-progress --progress=bar https://github.com/foxtrotperry/tiny-fax-service/releases/latest/download/$TAR_FILE
+wget -q --show-progress --progress=bar -P $TF_DIR https://github.com/foxtrotperry/tiny-fax-service/releases/latest/download/$TAR_FILE
 
 if [ ! -f "$TAR_FILE" ]; then
   error_echo "tiny-fax distribution download failed"
@@ -127,8 +127,7 @@ fi
 ##### Clean up the artifacts
 
 info_echo "Cleaning up artifacts..."
-rm $TAR_FILE.zip
-rm $TAR_FILE
+rm $TF_DIR/$TAR_FILE
 
 ##### Install the tiny-fax systemd services and timers
 
