@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "tiny-fax-client",
+      "name": "tiny-fax-service",
       "dependencies": {
         "@point-of-sale/network-receipt-printer": "2.0.0",
         "@point-of-sale/receipt-printer-encoder": "^3.0.3",

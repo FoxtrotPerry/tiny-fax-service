@@ -8,9 +8,11 @@ red=$(tput setaf 1)
 magenta=$(tput setaf 5)
 cyan=$(tput setaf 6)
 
+TF_DIR="opt/tiny-fax"
+
 info_echo() {
   local message="$1"
-  echo "✂ ${bold}[INFO]${normal}: $message"
+  echo "🔥 ${bold}[INFO]${normal}: $message"
 }
 
 done_echo() {
@@ -18,14 +20,12 @@ done_echo() {
   echo "✨ ${bold}${green}[DONE]: $message${normal} ✨"
 }
 
-TF_DIR="$HOME/.tiny-fax"
-
 echo "🧾 ${bold}${magenta}tiny-fax removal${normal} 🧾"
 
-info_echo "Removing crontab entries..."
-bash $TF_DIR/tiny-fax/rm_crontab.sh
+info_echo "Removing systemd services and timers..."
+bash $TF_DIR/tiny-fax/dist/setup/remove.sh
 
-info_echo "Removing project files..."
+info_echo "Removing tiny-fax project files..."
 rm -rf $TF_DIR
 
 done_echo "tiny-fax removal complete!"

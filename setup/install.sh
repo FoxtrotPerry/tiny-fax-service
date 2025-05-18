@@ -11,7 +11,7 @@ cyan=$(tput setaf 6)
 otp=invalid
 
 TF_DIR="opt/tiny-fax"
-ZIP_FILE="tiny-fax.zip"
+TAR_FILE="tiny-fax-service.tar.gz"
 
 RPI_SOURCE_LIST=/etc/apt/sources.list.d/raspi.list
 
@@ -24,7 +24,7 @@ ask_echo() {
 
 info_echo() {
   local message="$1"
-  echo "⛅️ ${bold}[INFO]${normal}: $message"
+  echo "📝 ${bold}[INFO]${normal}: $message"
 }
 
 warn_echo() {
@@ -48,8 +48,8 @@ done_echo() {
 }
 
 # Install steps
-# 1. Get the latest tiny-fax distribution zip from github
-# 2. Unzip the dist zip
+# 1. Get the latest tiny-fax distribution tar.gz from github
+# 2. Unzip the dist tag.gz
 # 3. Move the binaries to "$TF_DIR/dist/"
 # 4. Run "chmod +x $TF_DIR/dist/tf_printer"
 # 5. Setup crontab to execute the binary on system boot
@@ -89,28 +89,28 @@ cd $TF_DIR
 info_echo "Downloading latest tiny-fax distribution..."
 
 # TODO: Fix download url to point to actual repo
-wget -q --show-progress --progress=bar https://github.com/foxtrotperry/tiny-fax-client/releases/latest/download/$ZIP_FILE
+wget -q --show-progress --progress=bar https://github.com/foxtrotperry/tiny-fax-service/releases/latest/download/$TAR_FILE
 
-if [ ! -f "$ZIP_FILE" ]; then
+if [ ! -f "$TAR_FILE" ]; then
   error_echo "tiny-fax distribution download failed"
   exit 1
 fi
 
-info_echo "Un-zipping tiny-fax zip..."
-unzip -o -qq $ZIP_FILE
+info_echo "Un-zipping tiny-fax distribution tar..."
+tar -xzf $TAR_FILE
 
 if [ ! -d "$TF_DIR" ]; then
   error_echo "tiny-fax distribution failed to unzip"
   exit 1
 fi
 
-chmod +x $TF_DIR/dist/tiny_fax_client
+# chmod +x $TF_DIR/dist/bin/tiny_fax_service # TODO: confirm this isn't needed anymore
 
 info_echo "Cleaning up artifacts..."
-rm $ZIP_FILE
+rm $TAR_FILE
 
 info_echo "Adding systemd services..."
-source $TF_DIR/tiny-fax/add_crontab.sh
+source $TF_DIR/dist/setup/setup.sh
 
 printf "\n"
 done_echo "tiny-fax setup complete!"

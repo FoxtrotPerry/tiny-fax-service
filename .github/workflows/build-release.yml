@@ -1,0 +1,72 @@
+name: Build and Release tiny-fax-service
+
+on:
+  push:
+    tags:
+      - '*'
+
+env:
+  DIST: dist
+  TAR: tiny-fax-service.tar.gz
+  MAKE_PRE_RELEASE: ${{ contains(github.ref, 'pre') }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Compile
+        run: bun compile
+
+      - name: Copy files
+        run: bun copy
+
+      - name: Make files executable
+        run: bun chmod
+
+      - name: Generate tiny-fax-service.version file
+        run: |
+          touch ${{ env.DIST }}/tiny-fax-service.version
+          echo "${GITHUB_REF##*/}" >> ${{ env.DIST }}/tiny-fax-service.version
+          cat ${{ env.DIST }}/tiny-fax-service.version
+
+      - name: Create tar.gz
+        run: bun tar
+
+      - name: Publish artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TAR }}
+          path: ${{ env.TAR }}
+          include-hidden-files: true
+
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    needs: build
+    steps:
+      - name: Download ${{ env.TAR }} from artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.TAR }}
+      - name: Release tiny-fax-service
+        uses: ncipollo/release-action@v1.16.0
+        with:
+          artifacts: ${{ env.TAR }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
+          makeLatest: ${{ !env.MAKE_PRE_RELEASE }}
+          prerelease: ${{ env.MAKE_PRE_RELEASE }}
+          commit: ${{ github.sha }}
