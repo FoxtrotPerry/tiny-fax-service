@@ -26,6 +26,6 @@ info_echo "Removing systemd services and timers..."
 bash $TF_DIR/dist/setup/remove.sh
 
 info_echo "Removing tiny-fax project files..."
-rm -rf $TF_DIR
+sudo rm -rf $TF_DIR
 
 done_echo "tiny-fax removal complete!"
