@@ -93,7 +93,8 @@ cd $TF_DIR
 
 info_echo "Downloading latest tiny-fax distribution..."
 
-wget -q --show-progress --progress=bar -P $TF_DIR https://github.com/foxtrotperry/tiny-fax-service/releases/latest/download/$TAR_FILE
+# need sudo so that tar can be placed in /opt
+sudo wget -q --show-progress --progress=bar -P $TF_DIR https://github.com/foxtrotperry/tiny-fax-service/releases/latest/download/$TAR_FILE
 
 if [ ! -f "$TAR_FILE" ]; then
   error_echo "tiny-fax distribution download failed"
@@ -111,7 +112,7 @@ info_echo "Extracting tiny-fax distribution tar..."
 #   exit 1
 # fi
 
-tar -xzvf $TAR_FILE
+sudo tar -xzvf $TAR_FILE
 
 if [ ! -d "$TF_DIR/dist" ]; then
   error_echo "tiny-fax distribution tar.gz failed to extract"
@@ -122,7 +123,9 @@ fi
 
 ##### Use otp to get auth tokens
 
-curl "https://api.tinyfax.chat/token?otp=$otp" -H "Accept: application/json" -o $TF_DIR/dist/bin/tokens.json
+info_echo "Getting auth tokens..."
+
+sudo curl "https://api.tinyfax.chat/token?otp=$otp" -H "Accept: application/json" -o $TF_DIR/dist/bin/tokens.json
 
 ##### Clean up the artifacts
 
