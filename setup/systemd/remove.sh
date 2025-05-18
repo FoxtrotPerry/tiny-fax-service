@@ -46,7 +46,7 @@ else
   # Look for service and timer files in the setup directory
   info_echo "Looking for service and timer files in $TF_DIR/dist/setup..."
 
-  for file in "$TF_DIR"/dist/setup/*.service "$TF_DIR"/dist/setup/*.timer; do
+  for file in $TF_DIR/dist/setup/*.service $TF_DIR/dist/setup/*.timer; do
     if [[ -f "$file" ]]; then
       filename=$(basename "$file")
       systemd_file="$SYSTEMD_DIR/$filename"
