@@ -23,7 +23,7 @@ done_echo() {
 echo "🧾 ${bold}${magenta}tiny-fax removal${normal} 🧾"
 
 info_echo "Removing systemd services and timers..."
-bash $TF_DIR/tiny-fax/dist/setup/remove.sh
+bash $TF_DIR/dist/setup/remove.sh
 
 info_echo "Removing tiny-fax project files..."
 rm -rf $TF_DIR

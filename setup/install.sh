@@ -47,17 +47,10 @@ done_echo() {
   echo "✨ ${bold}${green}[DONE]: $message${normal} ✨"
 }
 
-# Install steps
-# 1. Get the latest tiny-fax distribution tar.gz from github
-# 2. Unzip the dist tag.gz
-# 3. Move the binaries to "$TF_DIR/dist/"
-# 4. Run "chmod +x $TF_DIR/dist/tf_printer"
-# 5. Setup crontab to execute the binary on system boot
-# 6. Clean up (delete zip and uncompressed zip folder)
-# 7. Ask user to reboot system
-
-echo "🧾 ${bold}${magenta}tiny-fax Installation${normal} 🧾"
+echo "🧾 ${bold}${magenta}tiny-fax installation${normal} 🧾"
 printf "\n"
+
+##### Check if a valid access code was provided
 
 # Check if an argument is provided
 if [ -z "$1" ]; then
@@ -76,15 +69,21 @@ else
   exit 1
 fi
 
+##### Check if we're running on a Raspberry Pi using Raspbian OS
+
 if [ -f "$RPI_SOURCE_LIST" ] && grep -q "http://archive.raspberrypi.com/debian/" $RPI_SOURCE_LIST; then
   info_echo "Raspbian OS detected"
 else
   warn_echo "Raspbian OS not detected! SKY PI might not work properly. If you run into problems, please create an issue on GitHub including what OS you're running!"
 fi
 
+##### Make the tiny-fax directory
+
 info_echo "Making tiny-fax directory at $TF_DIR..."
 mkdir -p $TF_DIR
 cd $TF_DIR
+
+##### Get the latest tiny-fax distribution
 
 info_echo "Downloading latest tiny-fax distribution..."
 
@@ -96,6 +95,8 @@ if [ ! -f "$TAR_FILE" ]; then
   exit 1
 fi
 
+##### Unzip the tiny-fax distribution
+
 info_echo "Un-zipping tiny-fax distribution tar..."
 tar -xzf $TAR_FILE
 
@@ -106,8 +107,12 @@ fi
 
 # chmod +x $TF_DIR/dist/bin/tiny_fax_service # TODO: confirm this isn't needed anymore
 
+##### Clean up the artifacts
+
 info_echo "Cleaning up artifacts..."
 rm $TAR_FILE
+
+##### Install the tiny-fax systemd services and timers
 
 info_echo "Adding systemd services..."
 source $TF_DIR/dist/setup/setup.sh

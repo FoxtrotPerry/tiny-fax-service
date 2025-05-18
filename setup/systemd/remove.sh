@@ -16,7 +16,7 @@ SYSTEMD_DIR="/etc/systemd/system"
 
 info_echo() {
   local message="$1"
-  echo "📝 ${bold}[INFO]${normal}: $message"
+  echo "🔥 ${bold}[INFO]${normal}: $message"
 }
 
 warn_echo() {
