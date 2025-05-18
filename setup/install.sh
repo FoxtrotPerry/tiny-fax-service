@@ -85,7 +85,7 @@ cd $TF_DIR
 
 ##### Use otp to get auth tokens
 
-curl "https://api.tinyfax.chat/token?otp=$otp" -H "Accept: application/json" -o ./dist/bin/tokens.json
+curl "https://api.tinyfax.chat/token?otp=$otp" -H "Accept: application/json" -o $TF_DIR/dist/bin/tokens.json
 
 ##### Get the latest tiny-fax distribution
 
@@ -100,7 +100,7 @@ fi
 
 ##### Unzip the tiny-fax distribution
 
-info_echo "Un-zipping tiny-fax distribution tar..."
+info_echo "Extracting tiny-fax distribution tar..."
 
 # unzip -o -qq $TAR_FILE.zip
 
