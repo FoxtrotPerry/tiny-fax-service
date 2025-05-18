@@ -80,7 +80,13 @@ fi
 ##### Make the tiny-fax directory
 
 info_echo "Making tiny-fax directory at $TF_DIR..."
-mkdir -p $TF_DIR
+sudo mkdir -p $TF_DIR
+
+if [ ! -d "$TF_DIR" ]; then
+  error_echo "Failed to create tiny-fax directory"
+  exit 1
+fi
+
 cd $TF_DIR
 
 ##### Use otp to get auth tokens
@@ -111,7 +117,7 @@ info_echo "Extracting tiny-fax distribution tar..."
 
 tar -xzvf $TAR_FILE
 
-if [ ! -d "$TF_DIR" ]; then
+if [ ! -d "$TF_DIR/dist" ]; then
   error_echo "tiny-fax distribution tar.gz failed to extract"
   exit 1
 fi
