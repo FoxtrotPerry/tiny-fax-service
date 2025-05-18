@@ -10,7 +10,7 @@ const zEnv = z.object({
 const getEnv = () => {
   const parseResult = zEnv.safeParse(process.env);
   if (parseResult.error) {
-    throw new ZodError([
+    const error = new ZodError([
       {
         message:
           "Problem parsing process.env. Are you missing any expected values in your .env? Check the path property of this error for clues.",
@@ -19,6 +19,8 @@ const getEnv = () => {
         path: parseResult.error.errors.map((err) => err.path).flat(),
       },
     ]);
+    console.error(error);
+    throw error;
   }
   return parseResult.data;
 };
