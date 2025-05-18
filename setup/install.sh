@@ -130,7 +130,7 @@ sudo curl "https://api.tinyfax.chat/token?otp=$otp" -H "Accept: application/json
 ##### Clean up the artifacts
 
 info_echo "Cleaning up artifacts..."
-rm $TF_DIR/$TAR_FILE
+sudo rm $TF_DIR/$TAR_FILE
 
 ##### Install the tiny-fax systemd services and timers
 

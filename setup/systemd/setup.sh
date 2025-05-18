@@ -13,6 +13,8 @@ cyan=$(tput setaf 6)
 TF_DIR="opt/tiny-fax"
 DEST_DIR="/etc/systemd/system"
 
+installed_units=()
+
 info_echo() {
   local message="$1"
   echo "📝 ${bold}[INFO]${normal}: $message"
@@ -26,6 +28,7 @@ for file in "$TF_DIR"/dist/setup/*.service "$TF_DIR"/dist/setup/*.timer; do
     info_echo "Installing $file..."
     sudo mv "$file" "$DEST_DIR/"
     sudo chmod 644 "$DEST_DIR/$(basename "$file")"
+    installed_units+=("$(basename "$file")")
   fi
 done
 
@@ -33,9 +36,9 @@ info_echo "Reloading systemd daemon..."
 sudo systemctl daemon-reload
 
 info_echo "Enabling services and timers..."
-for file in "$DEST_DIR"/*.service "$DEST_DIR"/*.timer; do
-  unit_name=$(basename "$file")
-  sudo systemctl enable "$unit_name"
+for unit in "${installed_units[@]}"; do
+  info_echo "Enabling $unit..."
+  sudo systemctl enable "$unit"
 done
 
 info_echo "All systemd services and timers installed and enabled successfully!"

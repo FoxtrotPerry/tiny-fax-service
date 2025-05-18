@@ -8,7 +8,7 @@ red=$(tput setaf 1)
 magenta=$(tput setaf 5)
 cyan=$(tput setaf 6)
 
-TF_DIR="opt/tiny-fax"
+TF_DIR="/opt/tiny-fax"
 
 info_echo() {
   local message="$1"
