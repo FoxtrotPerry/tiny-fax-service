@@ -89,10 +89,6 @@ fi
 
 cd $TF_DIR
 
-##### Use otp to get auth tokens
-
-curl "https://api.tinyfax.chat/token?otp=$otp" -H "Accept: application/json" -o $TF_DIR/dist/bin/tokens.json
-
 ##### Get the latest tiny-fax distribution
 
 info_echo "Downloading latest tiny-fax distribution..."
@@ -123,6 +119,10 @@ if [ ! -d "$TF_DIR/dist" ]; then
 fi
 
 # chmod +x $TF_DIR/dist/bin/tiny_fax_service # TODO: confirm this isn't needed anymore
+
+##### Use otp to get auth tokens
+
+curl "https://api.tinyfax.chat/token?otp=$otp" -H "Accept: application/json" -o $TF_DIR/dist/bin/tokens.json
 
 ##### Clean up the artifacts
 
