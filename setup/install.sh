@@ -87,7 +87,6 @@ cd $TF_DIR
 
 info_echo "Downloading latest tiny-fax distribution..."
 
-# TODO: Fix download url to point to actual repo
 wget -q --show-progress --progress=bar https://github.com/foxtrotperry/tiny-fax-service/releases/latest/download/$TAR_FILE
 
 if [ ! -f "$TAR_FILE" ]; then
@@ -98,10 +97,18 @@ fi
 ##### Unzip the tiny-fax distribution
 
 info_echo "Un-zipping tiny-fax distribution tar..."
+
+unzip -o -qq $TAR_FILE.zip
+
+if [ ! -f "$TAR_FILE" ]; then
+  error_echo "tiny-fax distribution zip file failed to unzip"
+  exit 1
+fi
+
 tar -xzf $TAR_FILE
 
 if [ ! -d "$TF_DIR" ]; then
-  error_echo "tiny-fax distribution failed to unzip"
+  error_echo "tiny-fax distribution tar.gz failed to unzip"
   exit 1
 fi
 
@@ -110,6 +117,7 @@ fi
 ##### Clean up the artifacts
 
 info_echo "Cleaning up artifacts..."
+rm $TAR_FILE.zip
 rm $TAR_FILE
 
 ##### Install the tiny-fax systemd services and timers
