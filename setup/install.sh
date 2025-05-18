@@ -85,7 +85,7 @@ cd $TF_DIR
 
 ##### Use otp to get auth tokens
 
-curl "https://example.com/api/endpoint?otp=123456" -H "Accept: application/json" -o response.json
+curl "https://api.tinyfax.chat/token?otp=$otp" -H "Accept: application/json" -o ./dist/bin/tokens.json
 
 ##### Get the latest tiny-fax distribution
 
@@ -102,17 +102,17 @@ fi
 
 info_echo "Un-zipping tiny-fax distribution tar..."
 
-unzip -o -qq $TAR_FILE.zip
+# unzip -o -qq $TAR_FILE.zip
 
-if [ ! -f "$TAR_FILE" ]; then
-  error_echo "tiny-fax distribution zip file failed to unzip"
-  exit 1
-fi
+# if [ ! -f "$TAR_FILE" ]; then
+#   error_echo "tiny-fax distribution zip file failed to unzip"
+#   exit 1
+# fi
 
-tar -xzf $TAR_FILE
+tar -xzfv $TAR_FILE
 
 if [ ! -d "$TF_DIR" ]; then
-  error_echo "tiny-fax distribution tar.gz failed to unzip"
+  error_echo "tiny-fax distribution tar.gz failed to extract"
   exit 1
 fi
 
