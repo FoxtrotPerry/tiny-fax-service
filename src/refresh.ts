@@ -12,7 +12,7 @@ import { env } from "./env";
 
 const unixNow = Math.round(Date.now() / 1000);
 const secondsInDay = 60 * 60 * 24;
-const secondsInFiveDays = secondsInDay * 5;
+// const fiveDaysInSeconds = secondsInDay * 5;
 
 // ensure refresh token exists
 
@@ -45,9 +45,9 @@ if (fileExists) {
   const iatContents = await iatFile.json(); // { iat: number }
 
   // if the token was refreshed within the last five days, we don't bother refreshing
-  if (iatContents.iat > unixNow - secondsInFiveDays) {
+  if (iatContents.iat > unixNow - secondsInDay) {
     console.log(
-      "Token has been refreshed within last 5 days, aborting refresh."
+      "Token has been refreshed within the last 24 hours, aborting refresh."
     );
     process.exit(0);
   }

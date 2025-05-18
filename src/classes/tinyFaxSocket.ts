@@ -1,6 +1,7 @@
 import { env } from "../env";
 import type { MessageBody } from "../types/message";
 import type { Room } from "../types/room";
+import { send } from "../utils";
 import { TinyFaxPrinter } from "./tinyFaxPrinter";
 
 export class TinyFaxSocket {
@@ -9,6 +10,7 @@ export class TinyFaxSocket {
   private url: string;
   private accessToken: string;
   private printer: TinyFaxPrinter;
+  private pingInterval: NodeJS.Timer | null = null;
   isConnected = false;
 
   constructor({
@@ -24,7 +26,7 @@ export class TinyFaxSocket {
     printerPort?: number;
     printer?: TinyFaxPrinter;
   }) {
-    this.url = `${env.TF_API_URL}/room?roomId=${room.id}`;
+    this.url = `${env.TF_API_URL}/room/${room.id}`;
     this.roomName = room.name;
     this.accessToken = accessToken;
     if (!printer && printerIp && printerPort) {
@@ -56,11 +58,18 @@ export class TinyFaxSocket {
     this.socket.addEventListener("open", () => {
       this.isConnected = true;
       console.log(`🌐 Connected to chat room ${this.roomName}`);
-      const message = {
-        message: "",
-        action: "listen",
-      } satisfies MessageBody;
-      this.socket?.send(JSON.stringify(message));
+      this.pingInterval = setInterval(() => {
+        if (this.socket?.readyState === WebSocket.OPEN) {
+          send({
+            socket: this.socket,
+            payload: {
+              action: "ping",
+              message: "What it do council",
+              userId: "",
+            },
+          });
+        }
+      }, 30 * 1000); // every 30 seconds
       this.printer.printInBox(`Connected to ${this.roomName}!`);
     });
 
