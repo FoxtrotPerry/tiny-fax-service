@@ -30,7 +30,7 @@ if [[ ! -d "$TF_DIR/dist/setup" ]]; then
   warn_echo "Will attempt to remove any tiny-fax related systemd units"
 
   # Look for any files in systemd directory that might be related to tiny-fax
-  for unit in "$SYSTEMD_DIR"/*tf_*.service "$SYSTEMD_DIR"/*tf_*.timer; do
+  for unit in $SYSTEMD_DIR/*tf_*.service $SYSTEMD_DIR/*tf_*.timer; do
     if [[ -f "$unit" ]]; then
       unit_name=$(basename "$unit")
 
