@@ -10,7 +10,7 @@ red=$(tput setaf 1)
 magenta=$(tput setaf 5)
 cyan=$(tput setaf 6)
 
-TF_DIR="opt/tiny-fax"
+TF_DIR="/opt/tiny-fax"
 DEST_DIR="/etc/systemd/system"
 
 installed_units=()
@@ -23,7 +23,7 @@ info_echo() {
 info_echo "Moving systemd unit files to $DEST_DIR..."
 
 # Find and move all .service and .timer files
-for file in "$TF_DIR"/dist/setup/*.service "$TF_DIR"/dist/setup/*.timer; do
+for file in $TF_DIR/dist/setup/*.service $TF_DIR/dist/setup/*.timer; do
   if [[ -f "$file" ]]; then
     info_echo "Installing $file..."
     sudo mv "$file" "$DEST_DIR/"
