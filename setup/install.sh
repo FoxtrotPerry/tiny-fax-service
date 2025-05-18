@@ -10,7 +10,7 @@ cyan=$(tput setaf 6)
 
 otp=invalid
 
-TF_DIR="opt/tiny-fax"
+TF_DIR="/opt/tiny-fax"
 TAR_FILE="tiny-fax-service.tar.gz"
 
 RPI_SOURCE_LIST=/etc/apt/sources.list.d/raspi.list
@@ -109,7 +109,7 @@ info_echo "Un-zipping tiny-fax distribution tar..."
 #   exit 1
 # fi
 
-tar -xzfv $TAR_FILE
+tar -xzvf $TAR_FILE
 
 if [ ! -d "$TF_DIR" ]; then
   error_echo "tiny-fax distribution tar.gz failed to extract"
