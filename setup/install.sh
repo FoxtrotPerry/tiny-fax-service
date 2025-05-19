@@ -119,7 +119,15 @@ if [ ! -d "$TF_DIR/dist" ]; then
   exit 1
 fi
 
-# chmod +x $TF_DIR/dist/bin/tiny_fax_service # TODO: confirm this isn't needed anymore
+##### Make directory for logs
+
+info_echo "Making log directory at $TF_DIR/logs..."
+
+sudo mkdir -p $TF_DIR/logs
+if [ ! -d "$TF_DIR/logs" ]; then
+  error_echo "Failed to create tiny-fax log directory"
+  exit 1
+fi
 
 ##### Use otp to get auth tokens
 
