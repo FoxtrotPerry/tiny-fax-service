@@ -44,7 +44,7 @@ jobs:
 
       - name: Create default .env file
         run: |
-          cp .env.prod.example ${{ env.DIST }}/bin/.env
+          cp .env.default ${{ env.DIST }}/bin/.env
 
       - name: Create tar.gz
         run: bun tar

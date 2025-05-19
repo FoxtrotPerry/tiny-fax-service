@@ -51,6 +51,8 @@ else
       filename=$(basename "$file")
       systemd_file="$SYSTEMD_DIR/$filename"
 
+      info_echo "Found $filename in setup directory, checking systemd directory..."
+
       # Check if the file exists in systemd directory
       if [[ -f "$systemd_file" ]]; then
         info_echo "Stopping and disabling $filename..."
