@@ -7,3 +7,6 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart=/opt/tiny-fax/tf_refresh
+
+[Install]
+WantedBy=multi-user.target
