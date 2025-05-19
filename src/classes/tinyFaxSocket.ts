@@ -69,11 +69,12 @@ export class TinyFaxSocket {
             },
           });
         }
-      }, 30 * 1000); // every 30 seconds
+      }, 1000 * 60 * 5); // every 5 minutes
       this.printer.printInBox(`Connected to ${this.roomName}!`);
     });
 
     this.socket.addEventListener("message", (event) => {
+      if (event.data === "pong") return;
       console.log("📠 Message received:", event.data);
       this.printer.print(event.data);
     });
