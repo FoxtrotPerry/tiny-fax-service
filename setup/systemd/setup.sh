@@ -26,7 +26,7 @@ info_echo "Moving systemd unit files to $DEST_DIR..."
 for file in $TF_DIR/dist/setup/*.service $TF_DIR/dist/setup/*.timer; do
   if [[ -f "$file" ]]; then
     info_echo "Installing $file..."
-    sudo mv "$file" "$DEST_DIR/"
+    sudo cp -f "$file" "$DEST_DIR/"
     sudo chmod 644 "$DEST_DIR/$(basename "$file")"
     installed_units+=("$(basename "$file")")
   fi

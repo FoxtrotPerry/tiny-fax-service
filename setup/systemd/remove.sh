@@ -21,7 +21,7 @@ info_echo() {
 
 warn_echo() {
   local message="$1"
-  echo "⚠️ ${yellow}[WARN]${normal}: $message"
+  echo "⚠️ ${bold}${yellow}[WARN]${normal}${yellow}: $message${normal}"
 }
 
 # Check if the setup directory exists
