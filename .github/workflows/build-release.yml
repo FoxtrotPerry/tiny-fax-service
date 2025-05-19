@@ -42,6 +42,10 @@ jobs:
           echo "${GITHUB_REF##*/}" >> ${{ env.DIST }}/tiny-fax-service.version
           cat ${{ env.DIST }}/tiny-fax-service.version
 
+      - name: Create default .env file
+        run: |
+          cp .env.prod.example ${{ env.DIST }}/bin/.env
+
       - name: Create tar.gz
         run: bun tar
 
