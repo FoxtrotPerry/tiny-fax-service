@@ -6,7 +6,10 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/opt/tiny-fax/tf_refresh
+ExecStart=sudo /opt/tiny-fax/dist/bin/tf_refresh
+WorkingDirectory=/opt/tiny-fax/dist/bin
+StandardOutput=append:/opt/tiny-fax/logs/refresh.log
+StandardError=append:/opt/tiny-fax/logs/refresh_errors.log
 
 [Install]
 WantedBy=multi-user.target

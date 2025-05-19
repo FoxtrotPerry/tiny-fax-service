@@ -39,6 +39,7 @@ info_echo "Enabling services and timers..."
 for unit in "${installed_units[@]}"; do
   info_echo "Enabling $unit..."
   sudo systemctl enable "$unit"
+  sudo systemctl start "$unit"
 done
 
 info_echo "All systemd services and timers installed and enabled successfully!"
