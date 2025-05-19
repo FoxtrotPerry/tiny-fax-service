@@ -28,7 +28,7 @@
     "compile:refresh": "bun build --compile --minify --target=bun-linux-arm64 ./src/refresh.ts --outfile ./dist/bin/tf_refresh",
     "compile:printer:macos": "bun build --compile --minify --target=bun-darwin-arm64 ./src/index.ts --outfile ./dist/bin/tf_printer",
     "compile:refresh:macos": "bun build --compile --minify --target=bun-darwin-arm64 ./src/refresh.ts --outfile ./dist/bin/tf_refresh",
-    "copy": "mkdir -p dist/setup/ && cp -rL setup/systemd/* dist/setup/",
+    "copy": "mkdir -p dist/setup/ && cp -f -rL setup/systemd/* dist/setup/",
     "chmod": "chmod +x dist/bin/* dist/**/*.sh",
     "tar": "rm tiny-fax-service.tar.gz & tar -czvf tiny-fax-service.tar.gz dist/*",
 
