@@ -11,6 +11,7 @@ export class TinyFaxSocket {
   private accessToken: string;
   private printer: TinyFaxPrinter;
   private pingInterval: NodeJS.Timer | null = null;
+  private disconnectIntentional = false;
   private updateRoomsAndReconnect: (() => void) | null = null;
   isConnected = false;
 
@@ -56,7 +57,9 @@ export class TinyFaxSocket {
 
     this.socket.addEventListener("open", () => {
       this.isConnected = true;
+      this.disconnectIntentional = false; // reset the disconnect flag
       console.log(`🌐 Connected to chat room ${this.roomName}`);
+
       this.pingInterval = setInterval(() => {
         if (this.socket?.readyState === WebSocket.OPEN) {
           send({
@@ -89,10 +92,14 @@ export class TinyFaxSocket {
       console.error(`Code: ${event.code}`);
       console.error(`Reason: ${event.reason}`);
       this.isConnected = false;
-      this.printer.printInBox("Disconnected. Reconnecting in 5 seconds...");
-      setTimeout(() => {
-        this.reconnect();
-      }, 5000);
+      if (!this.disconnectIntentional) {
+        this.printer.printInBox(
+          `Disconnected from ${this.roomName}. Reconnecting in 5 seconds...`
+        );
+        setTimeout(() => {
+          this.reconnect();
+        }, 5000);
+      }
     });
 
     this.socket.addEventListener("error", (err) => {
@@ -114,7 +121,7 @@ export class TinyFaxSocket {
 
   handleCommand(message: string): Boolean {
     switch (message) {
-      case "pong":
+      case "!pong":
         return true;
       case "!update_rooms":
         this.updateRoomsAndReconnect?.();
@@ -126,9 +133,21 @@ export class TinyFaxSocket {
 
   disconnect() {
     if (this.socket) {
+      this.disconnectIntentional = true;
       this.socket.close();
       this.isConnected = false;
-      console.log("⛓️‍💥  Socket disconnect successful.");
+      console.log("⛓️‍💥 Socket disconnect successful.");
+    }
+  }
+
+  destroy() {
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
+    }
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
     }
   }
 }

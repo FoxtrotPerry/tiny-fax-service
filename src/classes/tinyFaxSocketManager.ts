@@ -67,6 +67,7 @@ export class TinyFaxSocketManager {
         })
       );
       this.status = "connected";
+      this.printConnectedRooms();
     }
   }
 
@@ -77,16 +78,18 @@ export class TinyFaxSocketManager {
     }
     this.status = "refreshing";
     console.log("🌐 Refreshing rooms...");
+    if (this.printer.status === "connected") {
+      this.printer.printInBox(
+        "Updating room connections, disconnecting from all rooms..."
+      );
+    }
     this.rooms = await getRooms(this.accessToken);
     // Disconnect all sockets
     if (this.sockets) {
       this.sockets.forEach((socket) => {
         socket?.disconnect();
+        socket?.destroy();
       });
-    }
-    if (this.rooms.length === 0) {
-      console.error("❌ No rooms found");
-      return;
     }
     this.sockets = this.rooms.map((room) => {
       return new TinyFaxSocket({
@@ -104,8 +107,21 @@ export class TinyFaxSocketManager {
       );
       this.status = "connected";
       console.log("🌐 Refreshed rooms successfully.");
+      if (this.printer.status === "connected") {
+        this.printConnectedRooms();
+      }
     } else {
       console.error("❌ No sockets found");
+    }
+  }
+
+  private printConnectedRooms() {
+    if (this.printer.status === "connected") {
+      this.printer.printInBox(
+        `Connected to ${this.rooms.length} rooms: ${this.rooms
+          .map((room) => room.name)
+          .join(", ")}`
+      );
     }
   }
 }
