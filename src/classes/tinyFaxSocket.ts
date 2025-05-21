@@ -11,6 +11,7 @@ export class TinyFaxSocket {
   private accessToken: string;
   private printer: TinyFaxPrinter;
   private pingInterval: NodeJS.Timer | null = null;
+  private updateRoomsAndReconnect: (() => void) | null = null;
   isConnected = false;
 
   constructor({
@@ -19,16 +20,19 @@ export class TinyFaxSocket {
     printerIp,
     printerPort,
     printer,
+    updateRoomsAndReconnect,
   }: {
     room: Room;
     accessToken: string;
     printerIp?: string;
     printerPort?: number;
     printer?: TinyFaxPrinter;
+    updateRoomsAndReconnect?: () => void;
   }) {
     this.url = `${env.TF_API_URL}/room/${room.id}`;
     this.roomName = room.name;
     this.accessToken = accessToken;
+    this.updateRoomsAndReconnect = updateRoomsAndReconnect ?? null;
     if (!printer && printerIp && printerPort) {
       this.printer = new TinyFaxPrinter({
         host: printerIp,
@@ -44,11 +48,6 @@ export class TinyFaxSocket {
   }
 
   async connect() {
-    // Connect to the printer first
-
-    this.printer.connect();
-    await this.printer.waitForConnection();
-
     // Connect to the WebSocket server
 
     // We smuggle the JWT through the protocol options because the
@@ -74,12 +73,18 @@ export class TinyFaxSocket {
     });
 
     this.socket.addEventListener("message", (event) => {
-      if (event.data === "pong") return;
+      const commandHandled = this.handleCommand(event.data);
+      // don't print command messages
+      if (commandHandled) return;
       console.log("📠 Message received:", event.data);
       this.printer.print(event.data);
     });
 
     this.socket.addEventListener("close", (event) => {
+      if (this.pingInterval) {
+        clearInterval(this.pingInterval);
+        this.pingInterval = null;
+      }
       console.error("❌ Disconnected from chat server:");
       console.error(`Code: ${event.code}`);
       console.error(`Reason: ${event.reason}`);
@@ -91,6 +96,10 @@ export class TinyFaxSocket {
     });
 
     this.socket.addEventListener("error", (err) => {
+      if (this.pingInterval) {
+        clearInterval(this.pingInterval);
+        this.pingInterval = null;
+      }
       console.error("WebSocket error: ", err);
     });
   }
@@ -101,5 +110,25 @@ export class TinyFaxSocket {
       this.socket.close();
     }
     this.connect();
+  }
+
+  handleCommand(message: string): Boolean {
+    switch (message) {
+      case "pong":
+        return true;
+      case "!update_rooms":
+        this.updateRoomsAndReconnect?.();
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.close();
+      this.isConnected = false;
+      console.log("⛓️‍💥  Socket disconnect successful.");
+    }
   }
 }

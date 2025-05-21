@@ -2,6 +2,7 @@ import { TinyFaxSocket } from "./classes/tinyFaxSocket";
 import { env } from "./env";
 import { TinyFaxPrinter } from "./classes/tinyFaxPrinter";
 import { getRooms } from "./getRooms";
+import { TinyFaxSocketManager } from "./classes/tinyFaxSocketManager";
 
 const printerIp = env.TF_PRINTER_IP ?? "192.168.1.87";
 const printerPort = Number.parseInt(env.TF_PRINTER_PORT ?? "") ?? 9100;
@@ -38,24 +39,15 @@ const rooms = await getRooms(accessToken);
  * Connect to the chat server
  */
 
-// TODO: Could possible create just one TinyFaxPrinter instance and share it across all rooms.
-
 const printer = new TinyFaxPrinter({
   host: printerIp,
   port: printerPort,
 });
 
-const roomSockets = rooms.map((room) => {
-  const roomSocket = new TinyFaxSocket({
-    room,
-    accessToken,
-    printer,
-  });
-  return roomSocket;
+const socketManager = new TinyFaxSocketManager({
+  rooms,
+  accessToken,
+  printer,
 });
 
-await Promise.all(
-  roomSockets.map(async (roomSocket) => {
-    await roomSocket.connect();
-  })
-);
+await socketManager.connect();
