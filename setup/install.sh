@@ -69,6 +69,33 @@ else
   exit 1
 fi
 
+##### Check if the script is run as root
+
+if [ "$EUID" -ne 0 ]; then
+  ask_echo "This script must be run as root. Do you want to run it with sudo? (y/n)"
+  read -r answer
+  if [[ $answer =~ ^[Yy]$ ]]; then
+    sudo "$0" "$@"
+    exit
+  else
+    error_echo "Script must be run as root. Exiting..."
+    exit 1
+  fi
+fi
+
+##### Check is there is a previous installation and uninstall it
+
+if [ -d "$TF_DIR" ]; then
+  ask_echo "Previous installation found. Do you want to uninstall it? (y/n)"
+  read -r answer
+  if [[ $answer =~ ^[Yy]$ ]]; then
+    curl -sSL uninstall.tinyfax.chat | bash
+  else
+    error_echo "Previous installation must be removed before installing. Exiting..."
+    exit 1
+  fi
+fi
+
 ##### Check if we're running on a Raspberry Pi using Raspbian OS
 
 if [ -f "$RPI_SOURCE_LIST" ] && grep -q "http://archive.raspberrypi.com/debian/" $RPI_SOURCE_LIST; then

@@ -72,7 +72,6 @@ export class TinyFaxSocket {
           });
         }
       }, 1000 * 60 * 5); // every 5 minutes
-      this.printer.printInBox(`Connected to ${this.roomName}!`);
     });
 
     this.socket.addEventListener("message", (event) => {
