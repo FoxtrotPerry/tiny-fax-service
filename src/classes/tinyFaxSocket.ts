@@ -12,7 +12,7 @@ export class TinyFaxSocket {
   private printer: TinyFaxPrinter;
   private pingInterval: NodeJS.Timer | null = null;
   private disconnectIntentional = false;
-  private updateRoomsAndReconnect: (() => void) | null = null;
+  private updateRoomsAndReconnect: () => void;
   isConnected = false;
 
   constructor({
@@ -28,12 +28,12 @@ export class TinyFaxSocket {
     printerIp?: string;
     printerPort?: number;
     printer?: TinyFaxPrinter;
-    updateRoomsAndReconnect?: () => void;
+    updateRoomsAndReconnect: () => void;
   }) {
     this.url = `${env.TF_API_URL}/room/${room.id}`;
     this.roomName = room.name;
     this.accessToken = accessToken;
-    this.updateRoomsAndReconnect = updateRoomsAndReconnect ?? null;
+    this.updateRoomsAndReconnect = updateRoomsAndReconnect;
     if (!printer && printerIp && printerPort) {
       this.printer = new TinyFaxPrinter({
         host: printerIp,
@@ -75,10 +75,10 @@ export class TinyFaxSocket {
     });
 
     this.socket.addEventListener("message", (event) => {
+      console.log("📠 Message received:", event.data);
       const commandHandled = this.handleCommand(event.data);
       // don't print command messages
       if (commandHandled) return;
-      console.log("📠 Message received:", event.data);
       this.printer.print(event.data);
     });
 
@@ -123,7 +123,7 @@ export class TinyFaxSocket {
       case "!pong":
         return true;
       case "!update_rooms":
-        this.updateRoomsAndReconnect?.();
+        this.updateRoomsAndReconnect();
         return true;
       default:
         return false;
