@@ -72,9 +72,9 @@ fi
 ##### Check if the script is run as root
 
 if [ "$EUID" -ne 0 ]; then
-  ask_echo "This script must be run as root. Do you want to run it with sudo? (y/n)"
-  read -r answer
-  if [[ $answer =~ ^[Yy]$ ]]; then
+  ask_echo "This script must be run as root. Do you want to run it with sudo?"
+  read -p "(y/n): " response </dev/tty
+  if [[ $response =~ ^[Yy]$ ]]; then
     sudo "$0" "$@"
     exit
   else
@@ -86,9 +86,9 @@ fi
 ##### Check is there is a previous installation and uninstall it
 
 if [ -d "$TF_DIR" ]; then
-  ask_echo "Previous installation found. Do you want to uninstall it? (y/n)"
-  read -r answer
-  if [[ $answer =~ ^[Yy]$ ]]; then
+  ask_echo "Previous installation found. Do you want to uninstall it?"
+  read -p "(y/n): " response </dev/tty
+  if [[ $response =~ ^[Yy]$ ]]; then
     curl -sSL uninstall.tinyfax.chat | bash
   else
     error_echo "Previous installation must be removed before installing. Exiting..."
