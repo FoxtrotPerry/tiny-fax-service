@@ -71,7 +71,7 @@ fi
 
 ##### Check if the script is run as root
 
-if [ "$EUID" -ne 0 ]; then
+if [[ -n "$SUDO_USER" ]]; then
   ask_echo "This script must be run as root. Do you want to run it with sudo?"
   read -p "(y/n): " response </dev/tty
   if [[ $response =~ ^[Yy]$ ]]; then
