@@ -75,10 +75,10 @@ export class TinyFaxSocket {
     });
 
     this.socket.addEventListener("message", (event) => {
-      console.log("📠 Message received:", event.data);
       const commandHandled = this.handleCommand(event.data);
       // don't print command messages
       if (commandHandled) return;
+      console.log("📠 Message received:", event.data);
       this.printer.print(event.data);
     });
 
@@ -123,6 +123,7 @@ export class TinyFaxSocket {
       case "!pong":
         return true;
       case "!update_rooms":
+        console.log("!update_rooms command received");
         this.updateRoomsAndReconnect();
         return true;
       default:
