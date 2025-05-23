@@ -6,6 +6,9 @@ tokens.json
 iat.json
 tiny-fax-service.tar.gz
 .env.act
+*.jpg
+*.jpeg
+*.png
 
 # Logs
 

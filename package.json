@@ -9,6 +9,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@canvas/image": "^2.0.0",
     "@point-of-sale/network-receipt-printer": "2.0.0",
     "@point-of-sale/receipt-printer-encoder": "^3.0.3",
     "axios": "^1.9.0",
@@ -18,7 +19,6 @@
     "1": "# ======= DEV COMMANDS ======= #",
     "dev": "bun --watch src/index.ts",
     "refresh": "bun --watch src/refresh.ts",
-
     "2": "# ======= BUILD COMMANDS ======= #",
     "package": "bun compile && bun copy && bun chmod && bun tar",
     "package:macos": "bun compile:macos && bun copy && bun chmod && bun tar",
@@ -31,9 +31,10 @@
     "copy": "mkdir -p dist/setup/ && cp -f -rL setup/systemd/* dist/setup/",
     "chmod": "chmod +x dist/bin/* dist/**/*.sh",
     "tar": "rm tiny-fax-service.tar.gz & tar -czvf tiny-fax-service.tar.gz dist/*",
-
     "3": "# ======= PROD COMMANDS ======= #",
     "prod": "./dist/bin/tf_printer",
-    "prod:refresh": "./dist/bin/tf_refresh"
+    "prod:refresh": "./dist/bin/tf_refresh",
+    "4": "# ======= TEST COMMANDS ======= #",
+    "test:image": "bun src/testing/imageTest.ts"
   }
 }

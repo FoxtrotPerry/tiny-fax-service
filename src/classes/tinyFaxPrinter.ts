@@ -1,5 +1,8 @@
 import NetworkReceiptPrinter from "@point-of-sale/network-receipt-printer";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
+import { getImageData, imageFromBuffer } from "@canvas/image";
+import { getAdjustedImageDimensions } from "../utils";
+import { env } from "../env";
 
 // TODO: Strongly consider not using NetworkReceiptPrinter and instead write our own
 
@@ -147,6 +150,28 @@ export class TinyFaxPrinter {
     const printerMessage = this.encoder
       .initialize()
       .text(message)
+      .newline(9)
+      .encode();
+
+    this.printer?.print(printerMessage);
+  }
+
+  async printImage(imageBuffer: Uint8Array<ArrayBufferLike>) {
+    if (this.status !== "connected") {
+      console.error("Cannot print, printer is not connected.");
+      return;
+    }
+
+    const imageData = getImageData(await imageFromBuffer(imageBuffer));
+    const dimensions = getAdjustedImageDimensions(
+      imageData?.width,
+      imageData?.height,
+      env.TF_PRINTER_PX_WIDTH ?? 568
+    );
+
+    const printerMessage = this.encoder
+      .initialize()
+      .image(imageData, dimensions.width, dimensions.height, "atkinson")
       .newline(9)
       .encode();
 

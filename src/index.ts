@@ -5,7 +5,7 @@ import { getRooms } from "./getRooms";
 import { TinyFaxSocketManager } from "./classes/tinyFaxSocketManager";
 
 const printerIp = env.TF_PRINTER_IP ?? "192.168.1.87";
-const printerPort = Number.parseInt(env.TF_PRINTER_PORT ?? "") ?? 9100;
+const printerPort = env.TF_PRINTER_PORT ?? 9100;
 
 /*
  * Check for required keys
