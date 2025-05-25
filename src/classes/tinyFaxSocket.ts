@@ -1,5 +1,9 @@
 import { env } from "../env";
-import type { MessageBody } from "../types/message";
+import {
+  zImageMessage,
+  type ImageMessage,
+  type MessageBody,
+} from "../types/message";
 import type { Room } from "../types/room";
 import { send } from "../utils";
 import { TinyFaxPrinter } from "./tinyFaxPrinter";
@@ -74,12 +78,24 @@ export class TinyFaxSocket {
       }, 1000 * 60 * 5); // every 5 minutes
     });
 
-    this.socket.addEventListener("message", (event) => {
-      const commandHandled = this.handleCommand(event.data);
-      // don't print command messages
-      if (commandHandled) return;
-      console.log("📠 Message received:", event.data);
-      this.printer.print(event.data);
+    this.socket.addEventListener("message", async (event) => {
+      let message: ImageMessage | string = "";
+
+      // try to parse the incoming message as JSON incase it's an image message
+      try {
+        message = JSON.parse(event.data as string) as ImageMessage;
+      } catch (e) {
+        message = event.data as string;
+      }
+
+      if (typeof message !== "string") {
+        await this.printer.printImageFromString(message);
+      } else {
+        const commandHandled = this.handleCommand(event.data);
+        // don't print command messages
+        if (commandHandled) return;
+        this.printer.print(event.data);
+      }
     });
 
     this.socket.addEventListener("close", (event) => {

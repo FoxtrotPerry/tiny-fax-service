@@ -1,8 +1,9 @@
 import NetworkReceiptPrinter from "@point-of-sale/network-receipt-printer";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
-import { getImageData, imageFromBuffer } from "@canvas/image";
+import { getImageData, imageFromBuffer, Image } from "@canvas/image";
 import { getAdjustedImageDimensions } from "../utils";
 import { env } from "../env";
+import type { ImageMessage } from "../types/message";
 
 // TODO: Strongly consider not using NetworkReceiptPrinter and instead write our own
 
@@ -156,7 +157,7 @@ export class TinyFaxPrinter {
     this.printer?.print(printerMessage);
   }
 
-  async printImage(imageBuffer: Uint8Array<ArrayBufferLike>) {
+  async printImage(imageBuffer: Uint8Array<ArrayBufferLike>, text?: string) {
     if (this.status !== "connected") {
       console.error("Cannot print, printer is not connected.");
       return;
@@ -172,6 +173,36 @@ export class TinyFaxPrinter {
     const printerMessage = this.encoder
       .initialize()
       .image(imageData, dimensions.width, dimensions.height, "atkinson")
+      .newline(1)
+      .text(text ?? "")
+      .newline(9)
+      .encode();
+
+    this.printer?.print(printerMessage);
+  }
+
+  async printImageFromString({ image: imageURL, text }: ImageMessage) {
+    if (this.status !== "connected") {
+      console.error("Cannot print, printer is not connected.");
+      return;
+    }
+
+    const imageBuffer = await fetch(imageURL)
+      .then((response) => response.arrayBuffer())
+      .then((buffer) => new Uint8Array(buffer));
+
+    const imageData = getImageData(await imageFromBuffer(imageBuffer));
+    const dimensions = getAdjustedImageDimensions(
+      imageData?.width,
+      imageData?.height,
+      env.TF_PRINTER_PX_WIDTH ?? 568
+    );
+
+    const printerMessage = this.encoder
+      .initialize()
+      .image(imageData, dimensions.width, dimensions.height, "atkinson")
+      .newline(1)
+      .text(text ?? "")
       .newline(9)
       .encode();
 
