@@ -36,35 +36,35 @@ jobs:
 
       - name: Install dependencies
         working-directory: ${{ env.BUILD_DIR }}
-        run: sudo bun install
+        run: bun install
 
       - name: Compile
         working-directory: ${{ env.BUILD_DIR }}
-        run: sudo bun compile
+        run: bun compile
 
       - name: Copy files
         working-directory: ${{ env.BUILD_DIR }}
-        run: sudo bun copy
+        run: bun copy
 
       - name: Make files executable
         working-directory: ${{ env.BUILD_DIR }}
-        run: sudo bun chmod
+        run: bun chmod
 
       - name: Generate tiny-fax-service.version file
         working-directory: ${{ env.BUILD_DIR }}
         run: |
-          sudo touch ${{ env.DIST }}/tiny-fax-service.version
-          sudo echo "${GITHUB_REF##*/}" >> ${{ env.DIST }}/tiny-fax-service.version
-          sudo cat ${{ env.DIST }}/tiny-fax-service.version
+          touch ${{ env.DIST }}/tiny-fax-service.version
+          echo "${GITHUB_REF##*/}" >> ${{ env.DIST }}/tiny-fax-service.version
+          cat ${{ env.DIST }}/tiny-fax-service.version
 
       - name: Create default .env file
         working-directory: ${{ env.BUILD_DIR }}
         run: |
-          sudo cp .env.default ${{ env.DIST }}/bin/.env
+          cp .env.default ${{ env.DIST }}/bin/.env
 
       - name: Create tar.gz
         working-directory: ${{ env.BUILD_DIR }}
-        run: sudo bun tar
+        run: bun tar
 
       - name: Publish artifacts
         uses: actions/upload-artifact@v4
