@@ -132,14 +132,7 @@ fi
 
 info_echo "Extracting tiny-fax distribution tar..."
 
-# unzip -o -qq $TAR_FILE.zip
-
-# if [ ! -f "$TAR_FILE" ]; then
-#   error_echo "tiny-fax distribution zip file failed to unzip"
-#   exit 1
-# fi
-
-sudo tar -xzvf $TAR_FILE
+sudo tar -xzf $TAR_FILE
 
 if [ ! -d "$TF_DIR/dist" ]; then
   error_echo "tiny-fax distribution tar.gz failed to extract"
