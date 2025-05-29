@@ -150,7 +150,7 @@ export class TinyFaxPrinter {
 
     const printerMessage = this.encoder
       .initialize()
-      .text(message)
+      .text(message.slice(0, env.TF_MESSAGE_CHAR_LIMIT))
       .newline(9)
       .encode();
 
@@ -196,7 +196,7 @@ export class TinyFaxPrinter {
         .initialize()
         .image(imageData, dimensions.width, dimensions.height, "atkinson")
         .newline(1)
-        .text(text ?? "")
+        .text(text.slice(0, env.TF_MESSAGE_CHAR_LIMIT) ?? "")
         .newline(9)
         .encode();
 

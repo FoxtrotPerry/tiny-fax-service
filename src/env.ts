@@ -32,6 +32,20 @@ const zEnv = z.object({
       }
       return parsed;
     }),
+  TF_MESSAGE_CHAR_LIMIT: z
+    .string()
+    .min(1)
+    .optional()
+    .transform((val) => {
+      if (val === undefined) {
+        return undefined;
+      }
+      const parsed = Number.parseInt(val);
+      if (Number.isNaN(parsed) && val !== undefined) {
+        throw new Error("TF_MESSAGE_CHAR_LIMIT must be a number");
+      }
+      return parsed === 0 ? undefined : parsed; // 0 means no limit
+    }),
 });
 
 const getEnv = () => {
