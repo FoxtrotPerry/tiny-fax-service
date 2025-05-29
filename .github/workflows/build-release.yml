@@ -66,6 +66,11 @@ jobs:
         working-directory: ${{ env.BUILD_DIR }}
         run: bun tar
 
+      - name: Examine dist file tree at ${{ env.BUILD_DIR }}
+        run: |
+          echo "File tree at ${{ env.BUILD_DIR }}:"
+          tree -a ${{ env.BUILD_DIR }}/${{ env.DIST }}
+
       - name: Publish artifacts
         uses: actions/upload-artifact@v4
         with:
