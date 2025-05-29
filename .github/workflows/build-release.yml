@@ -53,18 +53,18 @@ jobs:
       - name: Generate tiny-fax-service.version file
         working-directory: ${{ env.BUILD_DIR }}
         run: |
-          touch ${{ env.DIST }}/tiny-fax-service.version
-          echo "${GITHUB_REF##*/}" >> ${{ env.DIST }}/tiny-fax-service.version
-          cat ${{ env.DIST }}/tiny-fax-service.version
+          sudo touch ${{ env.DIST }}/tiny-fax-service.version
+          sudo echo "${GITHUB_REF##*/}" >> ${{ env.DIST }}/tiny-fax-service.version
+          sudo cat ${{ env.DIST }}/tiny-fax-service.version
 
       - name: Create default .env file
         working-directory: ${{ env.BUILD_DIR }}
         run: |
-          cp .env.default ${{ env.DIST }}/bin/.env
+          sudo cp .env.default ${{ env.DIST }}/bin/.env
 
       - name: Create tar.gz
         working-directory: ${{ env.BUILD_DIR }}
-        run: bun tar
+        run: sudo bun tar
 
       - name: Publish artifacts
         uses: actions/upload-artifact@v4
