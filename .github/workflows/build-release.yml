@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     # defaults:
     #   run:
-    #     working-directory: ${{ env.BUILD_DIR }}
+    #     working-directory: ${{ env.BUILD_DIR }} # TODO: Ensure we need the same working directory for all steps before uncommenting
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,17 +58,19 @@ jobs:
           cat ${{ env.DIST }}/tiny-fax-service.version
 
       - name: Create default .env file
+        working-directory: ${{ env.BUILD_DIR }}
         run: |
           cp .env.default ${{ env.DIST }}/bin/.env
 
       - name: Create tar.gz
+        working-directory: ${{ env.BUILD_DIR }}
         run: bun tar
 
       - name: Publish artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.TAR }}
-          path: ${{ env.TAR }}
+          path: ${{ env.BUILD_DIR }}/${{ env.TAR }}
           include-hidden-files: true
 
   release:
