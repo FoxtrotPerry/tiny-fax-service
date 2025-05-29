@@ -146,6 +146,11 @@ if [ ! -d "$TF_DIR/dist" ]; then
   exit 1
 fi
 
+##### Move wasm files to project directory
+
+info_echo "Moving wasm files to project directory..."
+sudo mv $TF_DIR/dist/setup/node_modules $TF_DIR/
+
 ##### Make directory for logs
 
 info_echo "Making log directory at $TF_DIR/logs..."

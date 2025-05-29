@@ -50,10 +50,6 @@ jobs:
         working-directory: ${{ env.BUILD_DIR }}
         run: sudo bun chmod
 
-      - name: Copy necessary WASM dependencies
-        working-directory: ${{ env.BUILD_DIR }}
-        run: sudo bun copy:wasm
-
       - name: Generate tiny-fax-service.version file
         working-directory: ${{ env.BUILD_DIR }}
         run: |
