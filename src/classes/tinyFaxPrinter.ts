@@ -163,25 +163,47 @@ export class TinyFaxPrinter {
       return;
     }
 
-    const imageBuffer = await fetch(imageURL)
-      .then((response) => response.arrayBuffer())
-      .then((buffer) => new Uint8Array(buffer));
+    try {
+      const imageBuffer = await fetch(imageURL)
+        .then((response) => response.arrayBuffer())
+        .then((buffer) => new Uint8Array(buffer));
 
-    const imageData = getImageData(await imageFromBuffer(imageBuffer));
-    const dimensions = getAdjustedImageDimensions(
-      imageData?.width,
-      imageData?.height,
-      env.TF_PRINTER_PX_WIDTH ?? 568
-    );
+      const imageData = getImageData(await imageFromBuffer(imageBuffer));
 
-    const printerMessage = this.encoder
-      .initialize()
-      .image(imageData, dimensions.width, dimensions.height, "atkinson")
-      .newline(1)
-      .text(text ?? "")
-      .newline(9)
-      .encode();
+      if (!imageData) {
+        console.error("Failed to get image data from buffered image.");
+        return;
+      }
 
-    this.printer?.print(printerMessage);
+      const dimensions = getAdjustedImageDimensions(
+        imageData.width,
+        imageData.height,
+        env.TF_PRINTER_PX_WIDTH ?? 568
+      );
+
+      // don't try this at home, kids...
+      Object.defineProperty(imageData, "constructor", {
+        value: {
+          ...imageData?.constructor,
+          // Minification impacts class names in tiny-fax's binary, so we
+          // need to set the imageData's constructor name to be what
+          // encoder's .image function expects.
+          name: "ImageData",
+        },
+      });
+
+      const printerMessage = this.encoder
+        .initialize()
+        .image(imageData, dimensions.width, dimensions.height, "atkinson")
+        .newline(1)
+        .text(text ?? "")
+        .newline(9)
+        .encode();
+
+      this.printer?.print(printerMessage);
+    } catch (e) {
+      console.error("Error printing image", e);
+      return;
+    }
   }
 }

@@ -37,6 +37,7 @@
     "prod": "./dist/bin/tf_printer",
     "prod:refresh": "./dist/bin/tf_refresh",
     "4": "# ======= TEST COMMANDS ======= #",
-    "test:image": "bun src/testing/imageTest.ts"
+    "test:image": "bun src/testing/imageTest.ts",
+    "copy:env": "cp -f .env.local dist/bin/.env && cp tokens.json dist/bin/tokens.json"
   }
 }
