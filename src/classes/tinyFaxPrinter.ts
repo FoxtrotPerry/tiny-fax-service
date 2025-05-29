@@ -157,31 +157,7 @@ export class TinyFaxPrinter {
     this.printer?.print(printerMessage);
   }
 
-  async printImage(imageBuffer: Uint8Array<ArrayBufferLike>, text?: string) {
-    if (this.status !== "connected") {
-      console.error("Cannot print, printer is not connected.");
-      return;
-    }
-
-    const imageData = getImageData(await imageFromBuffer(imageBuffer));
-    const dimensions = getAdjustedImageDimensions(
-      imageData?.width,
-      imageData?.height,
-      env.TF_PRINTER_PX_WIDTH ?? 568
-    );
-
-    const printerMessage = this.encoder
-      .initialize()
-      .image(imageData, dimensions.width, dimensions.height, "atkinson")
-      .newline(1)
-      .text(text ?? "")
-      .newline(9)
-      .encode();
-
-    this.printer?.print(printerMessage);
-  }
-
-  async printImageFromString({ image: imageURL, text }: ImageMessage) {
+  async printImageMessage({ image: imageURL, text }: ImageMessage) {
     if (this.status !== "connected") {
       console.error("Cannot print, printer is not connected.");
       return;

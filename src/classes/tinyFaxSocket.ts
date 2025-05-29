@@ -89,7 +89,7 @@ export class TinyFaxSocket {
       }
 
       if (typeof message !== "string") {
-        await this.printer.printImageFromString(message);
+        await this.printer.printImageMessage(message);
       } else {
         const commandHandled = this.handleCommand(event.data);
         // don't print command messages

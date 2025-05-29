@@ -1,4 +1,3 @@
-import { TinyFaxSocket } from "./classes/tinyFaxSocket";
 import { env } from "./env";
 import { TinyFaxPrinter } from "./classes/tinyFaxPrinter";
 import { getRooms } from "./getRooms";
