@@ -1,3 +1,4 @@
+import { env } from "bun";
 import type { MessageBody } from "./types/message";
 
 export function send({
@@ -15,21 +16,18 @@ export function send({
  * Returns the closest width and height that is a multiple of 8 and doesn't exceed the maxWidth and maxHeight while keeping the aspect ratio.
  */
 export const getAdjustedImageDimensions = (
-  width?: number,
-  height?: number,
+  width: number,
+  height: number,
   /** maxWidth is important to enforce because printer paper is only so wide, but can print vertically as much as needed */
-  maxWidth?: number
+  maxWidth?: number,
+  /** if true, will return dimensions that are as close as possible to maxWidth of the paper while maintaining aspect ration */
+  scaleToFit: boolean = true
 ) => {
-  if (!width || !height) {
-    console.error("Width and height must be provided");
-    return {
-      width: 0,
-      height: 0,
-    };
-  }
-
   // Calculate the adjusted width of the image that doesn't exceed the maxWidth
-  const adjustedWidth = Math.floor(Math.min(width, maxWidth ?? width) / 8) * 8;
+  const adjustedWidth =
+    scaleToFit && maxWidth
+      ? Math.floor(maxWidth / 8) * 8
+      : Math.floor(Math.min(width, maxWidth ?? width) / 8) * 8;
   // Calculate the adjusted height of the image that keeps the aspect ratio and is a multiple of 8
   const adjustedHeight =
     Math.floor(Math.floor((adjustedWidth / width) * height) / 8) * 8;

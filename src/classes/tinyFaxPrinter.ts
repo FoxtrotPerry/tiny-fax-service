@@ -55,6 +55,7 @@ export class TinyFaxPrinter {
       console.log("❌ Printer disconnected.");
     });
 
+    // TODO: Will have to write my own NetworkReceiptPrinter to handle errors and reconnect on error :/
     // this.printer.addEventListener("error", (e) => {
     //   this.status = "error";
     //   console.error("❌ Printer connection error:", e);
@@ -178,7 +179,8 @@ export class TinyFaxPrinter {
       const dimensions = getAdjustedImageDimensions(
         imageData.width,
         imageData.height,
-        env.TF_PRINTER_PX_WIDTH ?? 568
+        env.TF_PRINTER_PX_WIDTH ?? 568,
+        true // scale to fit
       );
 
       // don't try this at home, kids...
@@ -195,8 +197,16 @@ export class TinyFaxPrinter {
       const printerMessage = this.encoder
         .initialize()
         .image(imageData, dimensions.width, dimensions.height, "atkinson")
-        .newline(1)
-        .text(text.slice(0, env.TF_MESSAGE_CHAR_LIMIT) ?? "")
+        .box(
+          {
+            align: "left",
+            style: "single",
+            marginLeft: 0,
+            marginRight: 0,
+            paddingLeft: 1,
+          },
+          text.slice(0, env.TF_MESSAGE_CHAR_LIMIT)
+        )
         .newline(9)
         .encode();
 
