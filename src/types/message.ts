@@ -41,6 +41,11 @@ const zMessageBody = z.discriminatedUnion("action", [
     message: zImageMessage,
     userId: z.string().optional(),
   }),
+  z.object({
+    action: z.literal("listen"),
+    message: z.string(),
+    userId: z.string().optional(),
+  }),
 ]);
 
 // export const zMessageBody = z.object({
