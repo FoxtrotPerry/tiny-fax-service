@@ -1,7 +1,7 @@
 import NetworkReceiptPrinter from "@point-of-sale/network-receipt-printer";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
 import { getImageData, imageFromBuffer, Image } from "@canvas/image";
-import { getAdjustedImageDimensions } from "../utils";
+import { getAdjustedImageDimensions, wait } from "../utils";
 import { env } from "../env";
 import type { ImageMessage } from "../types/message";
 
@@ -29,7 +29,7 @@ export class TinyFaxPrinter {
     });
   }
 
-  connect() {
+  async connect() {
     if (this.status === "connected") {
       console.log("🖨️  Already connected to printer.");
       return;
@@ -52,7 +52,8 @@ export class TinyFaxPrinter {
 
     this.printer.addEventListener("disconnected", () => {
       this.status = "disconnected";
-      console.log("❌ Printer disconnected.");
+      console.log("❌ Printer disconnected. Will attempt to reconnect...");
+      this.connect();
     });
 
     // TODO: Will have to write my own NetworkReceiptPrinter to handle errors and reconnect on error :/
@@ -67,13 +68,17 @@ export class TinyFaxPrinter {
     // });
 
     this.printer.connect();
-    this.status = "connecting";
-
-    // try {
-    //   this.printer.connect();
-    // } catch (error) {
-    //   this.status = "error";
-    // }
+    return new Promise<void>(async (resolve, reject) => {
+      const waitMs = 200;
+      while (this.retries < 100) {
+        if (this.status === "connected") {
+          resolve();
+        } else if (this.status === "error" || this.status === "timeout") {
+          reject(new Error("Failed to connect to printer"));
+        }
+        await wait(waitMs, this.retries);
+      }
+    });
   }
 
   disconnect() {
@@ -90,31 +95,6 @@ export class TinyFaxPrinter {
       this.status = "disconnected";
       console.log("🖨️  Reconnecting to printer...");
       this.connect();
-    }
-  }
-
-  /**
-   * Call this right after connecting to the printer to wait for the
-   * connection to be established.
-   * This is useful for when you want to wait for the printer to be
-   * connected before sending any print jobs.
-   */
-  async waitForConnection() {
-    while (true) {
-      if (this.status === "connected") {
-        break;
-      }
-      console.log(`Waiting for printer to connect...`);
-      // wait 500ms before next check
-      const wait = async (ms: number) =>
-        new Promise((resolve) => setTimeout(resolve, ms * (this.retries + 1)));
-      await wait(500);
-      console.log(`Will try again in ${500 * (this.retries + 1)}ms...`);
-      this.retries++;
-      if (this.retries > 10) {
-        console.error("❌ Printer connection timed out.");
-        break;
-      }
     }
   }
 
@@ -143,8 +123,9 @@ export class TinyFaxPrinter {
     this.printer?.print(printerMessage);
   }
 
-  print(message: string) {
+  async print(message: string) {
     if (this.status !== "connected") {
+      await this.connect();
       console.error("Cannot print, printer is not connected.");
       return;
     }

@@ -52,7 +52,6 @@ export class TinyFaxSocketManager {
     this.status = "connecting";
     // Connect to the printer first
     await this.printer.connect();
-    await this.printer.waitForConnection();
 
     if (this.printer.status !== "connected") {
       console.error("❌ Printer connection failed.");

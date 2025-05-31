@@ -37,3 +37,6 @@ export const getAdjustedImageDimensions = (
     height: adjustedHeight,
   };
 };
+
+export const wait = async (ms: number, retries: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms * (retries + 1)));
