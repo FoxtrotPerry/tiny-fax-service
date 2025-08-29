@@ -1,5 +1,5 @@
 [Unit]
-Description=tiny-fax: Token refresh service
+Description=tiny-fax: Printer link service
 After=network-online.target
 Wants=network-online.target
 
