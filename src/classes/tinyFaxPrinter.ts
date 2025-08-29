@@ -1,6 +1,6 @@
 import NetworkReceiptPrinter from "@point-of-sale/network-receipt-printer";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
-import { getImageData, imageFromBuffer, Image } from "@canvas/image";
+import { getImageData, imageFromBuffer } from "@canvas/image";
 import { getAdjustedImageDimensions, wait } from "../utils";
 import { env } from "../env";
 import type { ImageMessage } from "../types/message";

@@ -64,16 +64,13 @@ export class TinyFaxSocket {
       this.disconnectIntentional = false; // reset the disconnect flag
       console.log(`🌐 Connected to chat room ${this.roomName}`);
 
-      if (this.socket?.readyState === WebSocket.OPEN) {
-        send({
-          socket: this.socket,
-          payload: {
-            action: "listen",
-            message: "What it do council",
-            userId: "",
-          },
-        });
-      }
+      send({
+        socket: this.socket,
+        payload: {
+          action: "listen",
+          message: "What it do council",
+        },
+      });
 
       this.pingInterval = setInterval(() => {
         if (this.socket?.readyState === WebSocket.OPEN) {
@@ -82,7 +79,6 @@ export class TinyFaxSocket {
             payload: {
               action: "ping",
               message: "What it do council",
-              userId: "",
             },
           });
         }

@@ -7,6 +7,9 @@
 
 import axios from "axios";
 import { env } from "./env";
+import { secrets } from "bun";
+import { accessTokenKeys, refreshTokenKeys } from "./constants";
+import type { TokenData } from "./types/token";
 
 // constants
 
@@ -24,17 +27,17 @@ if (!tokensExist) {
   process.exit(1);
 }
 
-const tokensContents = await tokensFile.json();
+const tokensContents: TokenData = await tokensFile.json();
+const refreshToken =
+  (await secrets.get(refreshTokenKeys)) ?? tokensContents?.refreshToken;
 
 /**
  * Check for required env vars
  */
-if (!tokensContents?.refreshToken) {
+if (!refreshToken) {
   console.error("TF: REFRESH TOKEN NOT FOUND");
   process.exit(1);
 }
-
-const refreshToken = tokensContents.refreshToken;
 
 // check if token is nearing expiration
 
@@ -57,14 +60,19 @@ if (fileExists) {
 
 // if we've gotten here, a token refresh is required
 
-const refreshResp = await axios.post(`${env.TF_API_URL}/token/refresh`, {
-  refreshToken,
-});
+const refreshResp = await axios.post<TokenData>(
+  `${env.TF_API_URL}/token/refresh`,
+  {
+    refreshToken,
+  }
+);
 
 const newTokens = refreshResp.data;
 
-Bun.write("tokens.json", JSON.stringify(newTokens));
-
-Bun.write("iat.json", JSON.stringify({ iat: Math.round(Date.now() / 1000) }));
+await Promise.all([
+  secrets.set({ ...accessTokenKeys, value: newTokens.accessToken }),
+  secrets.set({ ...refreshTokenKeys, value: newTokens.refreshToken }),
+  Bun.write("iat.json", JSON.stringify({ iat: Math.round(Date.now() / 1000) })),
+]);
 
 process.exit(0);

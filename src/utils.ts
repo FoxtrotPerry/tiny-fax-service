@@ -1,4 +1,3 @@
-import { env } from "bun";
 import type { MessageBody } from "./types/message";
 
 export function send({

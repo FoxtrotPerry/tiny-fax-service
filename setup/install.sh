@@ -160,6 +160,10 @@ info_echo "Getting auth tokens..."
 
 sudo curl "https://api.tinyfax.chat/token?otp=$otp" -H "Accept: application/json" -o $TF_DIR/dist/bin/tokens.json
 
+##### Run init script to store tokens
+
+## TODO: Run init script and pass otp as args. script will handle fetching tokens and storing them with bun.
+
 ##### Clean up the artifacts
 
 info_echo "Cleaning up artifacts..."
