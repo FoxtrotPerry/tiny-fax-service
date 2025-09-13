@@ -147,7 +147,7 @@ declare module "@point-of-sale/receipt-printer-encoder" {
     printerModel?: PrinterModel;
   }
 
-  export default class ReceiptPrinterEncoderClass {
+  export default class ReceiptPrinterEncoder {
     constructor(options?: ReceiptPrinterOptions);
 
     initialize(): ReceiptPrinterEncoder;

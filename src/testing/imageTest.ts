@@ -1,10 +1,10 @@
 import NetworkReceiptPrinter from "@point-of-sale/network-receipt-printer";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
-import { TinyFaxPrinter } from "../classes/tinyFaxPrinter";
+import { TinyFaxPrinterManager } from "../classes/tinyFaxPrinterManager";
 import type { ImageMessage } from "../types/message";
 import { printerConfig } from "../constants/printerConfig";
 
-const printer = new TinyFaxPrinter(printerConfig);
+const printer = new TinyFaxPrinterManager(printerConfig);
 
 await printer.connect();
 

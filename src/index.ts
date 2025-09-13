@@ -1,5 +1,5 @@
 import { env } from "./env";
-import { TinyFaxPrinter } from "./classes/tinyFaxPrinter";
+import { TinyFaxPrinterManager } from "./classes/tinyFaxPrinterManager";
 import { getRooms } from "./getRooms";
 import { TinyFaxSocketManager } from "./classes/tinyFaxSocketManager";
 
@@ -38,7 +38,7 @@ const rooms = await getRooms(accessToken);
  * Connect to the chat server
  */
 
-const printer = new TinyFaxPrinter({
+const printers = new TinyFaxPrinterManager({
   host: printerIp,
   port: printerPort,
 });
@@ -46,7 +46,7 @@ const printer = new TinyFaxPrinter({
 const socketManager = new TinyFaxSocketManager({
   rooms,
   accessToken,
-  printer,
+  printers,
 });
 
 await socketManager.connect();

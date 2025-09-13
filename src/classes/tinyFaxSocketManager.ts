@@ -1,6 +1,6 @@
 import { getRooms } from "../getRooms";
 import type { Room } from "../types/room";
-import { TinyFaxPrinter } from "./tinyFaxPrinter";
+import { TinyFaxPrinterManager } from "./tinyFaxPrinterManager";
 import { TinyFaxSocket } from "./tinyFaxSocket";
 
 /**
@@ -9,32 +9,28 @@ import { TinyFaxSocket } from "./tinyFaxSocket";
 export class TinyFaxSocketManager {
   private rooms: Room[];
   private accessToken: string;
-  private printer: TinyFaxPrinter;
+  private printers: TinyFaxPrinterManager;
   private sockets: TinyFaxSocket[] | null = null;
-  private status:
-    | "idle"
-    | "connecting"
-    | "connected"
-    | "disconnected"
-    | "refreshing" = "idle";
+  status: "idle" | "connecting" | "connected" | "disconnected" | "refreshing" =
+    "idle";
 
   constructor({
     rooms,
     accessToken,
-    printer,
+    printers,
   }: {
     rooms: Room[];
     accessToken: string;
-    printer: TinyFaxPrinter;
+    printers: TinyFaxPrinterManager;
   }) {
     this.rooms = rooms;
     this.accessToken = accessToken;
-    this.printer = printer;
+    this.printers = printers;
     this.sockets = rooms.map((room) => {
       return new TinyFaxSocket({
         room,
         accessToken,
-        printer,
+        printers,
         updateRoomsAndReconnect: this.updateRoomsAndReconnect.bind(this),
       });
     });
@@ -51,9 +47,9 @@ export class TinyFaxSocketManager {
     }
     this.status = "connecting";
     // Connect to the printer first
-    await this.printer.connect();
+    await this.printers.connect();
 
-    if (this.printer.status !== "connected") {
+    if (this.printers.noneConnected) {
       console.error("❌ Printer connection failed.");
       return;
     }
@@ -61,9 +57,7 @@ export class TinyFaxSocketManager {
     // Connect to all WebSocket servers
     if (this.sockets) {
       await Promise.all(
-        this.sockets.map(async (socket) => {
-          await socket.connect();
-        })
+        this.sockets.map(async (socket) => await socket.connect())
       );
       this.status = "connected";
       this.printConnectedRooms();
@@ -77,8 +71,8 @@ export class TinyFaxSocketManager {
     }
     this.status = "refreshing";
     console.log("🌐 Refreshing rooms...");
-    if (this.printer.status === "connected") {
-      this.printer.printInBox(
+    if (this.printers.anyConnected) {
+      this.printers.printInBox(
         "Updating room connections, disconnecting from all rooms..."
       );
     }
@@ -94,7 +88,7 @@ export class TinyFaxSocketManager {
       return new TinyFaxSocket({
         room,
         accessToken: this.accessToken,
-        printer: this.printer,
+        printers: this.printers,
         updateRoomsAndReconnect: this.updateRoomsAndReconnect.bind(this),
       });
     });
@@ -106,7 +100,7 @@ export class TinyFaxSocketManager {
       );
       this.status = "connected";
       console.log("🌐 Refreshed rooms successfully.");
-      if (this.printer.status === "connected") {
+      if (this.printers.anyConnected) {
         this.printConnectedRooms();
       }
     } else {
@@ -115,8 +109,8 @@ export class TinyFaxSocketManager {
   }
 
   private printConnectedRooms() {
-    if (this.printer.status === "connected") {
-      this.printer.printInBox(
+    if (this.printers.anyConnected) {
+      this.printers.printInBox(
         `Connected to ${this.rooms.length} rooms: ${this.rooms
           .map((room) => room.name)
           .join(", ")}`
