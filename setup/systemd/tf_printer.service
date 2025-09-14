@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 ExecStart=/opt/tiny-fax/dist/bin/tf_printer
 Restart=always
-RestartSec=5
+RestartSec=10
 WorkingDirectory=/opt/tiny-fax/dist/bin
 StandardOutput=append:/opt/tiny-fax/logs/printer.log
 StandardError=append:/opt/tiny-fax/logs/printer_errors.log

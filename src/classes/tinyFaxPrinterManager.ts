@@ -1,63 +1,62 @@
-import NetworkReceiptPrinter from "@point-of-sale/network-receipt-printer";
 import ReceiptPrinterEncoder from "@point-of-sale/receipt-printer-encoder";
+import EventEmitter from "eventemitter3";
 import { getImageData, imageFromBuffer, Image } from "@canvas/image";
 import { getAdjustedImageDimensions, wait } from "../utils";
 import { env } from "../env";
 import type { ImageMessage } from "../types/message";
 import { UsbReceiptPrinter } from "./usbReceiptPrinter";
 import type { Status } from "../types/status";
+import NetworkReceiptPrinter from "./networkReceiptPrinter";
 
 // TODO: Strongly consider not using NetworkReceiptPrinter and instead write our own
 
-type ConnectionType = "network" | "usb";
+type PrinterManagerEvents = {
+  printerCountChange: (count: number) => void;
+};
 
-export class TinyFaxPrinterManager {
+export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
   private networkPrinter?: NetworkReceiptPrinter;
-  private usbPrinter?: UsbReceiptPrinter;
+  private usbPrinter: UsbReceiptPrinter;
   private encoder: ReceiptPrinterEncoder;
-  private host?: string;
-  private port?: number;
-  private retries = 0;
-  networkPrinterStatus: Status = "idle";
   usbPrinterStatus: Status = "idle";
 
   constructor(networkArgs?: { host: string; port: number }) {
-    console.log("🖨️  Initializing printer...");
+    super();
     this.usbPrinter = new UsbReceiptPrinter();
     if (networkArgs) {
       const { host, port } = networkArgs;
-      this.host = host;
-      this.port = port;
 
       this.networkPrinter = new NetworkReceiptPrinter({
-        host: this.host,
-        port: this.port,
+        host,
+        port,
         timeout: 0,
       });
 
-      this.networkPrinter.addEventListener("connected", () => {
-        this.networkPrinterStatus = "connected";
-        console.log("🖨️  Connected to printer!");
+      this.networkPrinter.on("connected", () => {
+        console.log("🖨️ Connected to network printer!");
+        this.emitPrinterCountChange();
       });
 
-      this.networkPrinter.addEventListener("disconnected", () => {
-        this.networkPrinterStatus = "disconnected";
+      this.networkPrinter.on("disconnected", () => {
+        // only trigger a reconnect if we were previously connected
+        if (this.networkPrinter?.status !== "connected") {
+          return;
+        }
         console.log(
           "❌ Network printer disconnected. Will attempt to reconnect..."
         );
-        this.connect();
+        wait(2000).then(() => {
+          this.connectNetworkPrinter();
+        });
       });
 
-      // TODO: Will have to write my own NetworkReceiptPrinter to handle errors and reconnect on error :/
-      // this.networkPrinter.addEventListener("error", (e) => {
-      //   this.networkPrinterStatus = "error";
-      //   console.error("❌ Printer connection error:", e);
-      // });
+      this.networkPrinter.on("error", (e) => {
+        console.error("❌ Printer connection error:", e);
+      });
 
-      // this.networkPrinter.addEventListener("timeout", () => {
-      //   this.networkPrinterStatus = "timeout";
-      //   console.error("⌛️ Printer connection timed out");
-      // });
+      this.networkPrinter.on("timeout", () => {
+        console.error("⌛️ Printer connection timed out");
+      });
     }
     this.encoder = new ReceiptPrinterEncoder({
       language: "esc-pos",
@@ -65,11 +64,14 @@ export class TinyFaxPrinterManager {
   }
 
   async connect() {
-    const printersToConnect: Promise<void>[] = [];
-    if (this.networkPrinter)
-      printersToConnect.push(this.connectNetworkPrinter());
-    if (this.usbPrinter) printersToConnect.push(this.connectUsbPrinter());
-    await Promise.all(printersToConnect);
+    const connectingPrinters: Promise<void>[] = [];
+    if (this.networkPrinter && this.networkPrinter?.status !== "connected") {
+      connectingPrinters.push(this.connectNetworkPrinter());
+    }
+    if (this.usbPrinter && this.usbPrinterStatus !== "connected") {
+      connectingPrinters.push(this.connectUsbPrinter());
+    }
+    await Promise.all(connectingPrinters);
   }
 
   async connectNetworkPrinter() {
@@ -77,33 +79,21 @@ export class TinyFaxPrinterManager {
       console.error("❌ No network printer instantiated.");
       return;
     }
-    if (this.networkPrinterStatus === "connected") {
-      console.log("🖨️  Already connected to a printer.");
+    if (this.networkPrinter?.status === "connected") {
+      console.log("🖨️  Already connected to a network printer.");
       return;
     }
-    if (this.networkPrinterStatus === "connecting") {
-      console.log("⏳ Already connecting to printer.");
+    if (this.networkPrinter?.status === "connecting") {
+      console.log("⏳ Already connecting to network printer.");
       return;
     }
 
-    this.networkPrinter.connect();
-    return new Promise<void>(async (resolve, reject) => {
-      const waitMs = 200;
-      while (this.retries < 10) {
-        if (this.networkPrinterStatus === "connected") {
-          resolve();
-        } else if (
-          this.networkPrinterStatus === "error" ||
-          this.networkPrinterStatus === "timeout"
-        ) {
-          reject(new Error("Failed to connect to printer"));
-        }
-        await wait(waitMs, this.retries);
-        this.retries++;
-        console.log(this.retries);
-      }
-      resolve();
-    });
+    try {
+      await this.networkPrinter.connect();
+    } catch (e) {
+      console.error("❌ Error connecting to network printer:", e);
+      return;
+    }
   }
 
   async connectUsbPrinter() {
@@ -120,46 +110,23 @@ export class TinyFaxPrinterManager {
       return;
     }
 
-    await this.usbPrinter.connect({
-      onConnected: () => {
-        this.usbPrinterStatus = "connected";
-      },
+    this.usbPrinter.on("connected", () => {
+      this.usbPrinterStatus = "connected";
+      this.emitPrinterCountChange();
     });
 
-    // this.usbPrinter.print(
-    //   this.encoder
-    //     .initialize()
-    //     .text("USB Printer Connected!")
-    //     .newline(9)
-    //     .encode()
-    // );
+    await this.usbPrinter.connect();
   }
 
   disconnect() {
     if (this.networkPrinter) {
       this.networkPrinter.disconnect();
-      this.networkPrinterStatus = "disconnected";
-      console.log("🖨️  Disconnected from printer.");
+      console.log("🖨️ Disconnected from network printer.");
     }
     if (this.usbPrinter) {
       this.usbPrinter.disconnect();
       this.usbPrinterStatus = "disconnected";
-      console.log("🖨️  Disconnected from USB printer.");
-    }
-  }
-
-  reconnect() {
-    if (this.networkPrinter) {
-      this.networkPrinter.disconnect();
-      this.networkPrinterStatus = "disconnected";
-      console.log("🖨️  Reconnecting to printer...");
-      this.connect();
-    }
-    if (this.usbPrinter) {
-      this.usbPrinter.disconnect();
-      this.usbPrinterStatus = "disconnected";
-      console.log("🖨️  Reconnecting to USB printer...");
-      this.connect();
+      console.log("🖨️ Disconnected from USB printer.");
     }
   }
 
@@ -204,7 +171,7 @@ export class TinyFaxPrinterManager {
   }
 
   async printImageMessage({ image: imageURL, text }: ImageMessage) {
-    if (this.networkPrinterStatus !== "connected") {
+    if (this.networkPrinter?.status !== "connected") {
       console.error("Cannot print, printer is not connected.");
       return;
     }
@@ -263,7 +230,7 @@ export class TinyFaxPrinterManager {
   }
 
   broadcastPrint(message: Uint8Array<ArrayBufferLike>) {
-    if (this.networkPrinterStatus === "connected") {
+    if (this.networkPrinter?.status === "connected") {
       this.networkPrinter?.print(message);
     }
     if (this.usbPrinterStatus === "connected") {
@@ -273,15 +240,26 @@ export class TinyFaxPrinterManager {
 
   get anyConnected() {
     return (
-      this.networkPrinterStatus === "connected" ||
+      this.networkPrinter?.status === "connected" ||
       this.usbPrinterStatus === "connected"
     );
   }
 
   get noneConnected() {
     return (
-      this.networkPrinterStatus !== "connected" &&
+      this.networkPrinter?.status !== "connected" &&
       this.usbPrinterStatus !== "connected"
     );
+  }
+
+  get connectedCount() {
+    let count = 0;
+    if (this.networkPrinter?.status === "connected") count++;
+    if (this.usbPrinterStatus === "connected") count++;
+    return count;
+  }
+
+  private emitPrinterCountChange() {
+    this.emit("printerCountChange", this.connectedCount);
   }
 }

@@ -49,4 +49,30 @@ const socketManager = new TinyFaxSocketManager({
   printers,
 });
 
-await socketManager.connect();
+const shutDownSequence = () => {
+  console.log(`\n🖨️ Shutting down...`);
+  printers.disconnect();
+  socketManager.disconnectSockets();
+  console.log("👋 Exiting");
+  process.exit();
+};
+
+process.on("SIGINT", shutDownSequence);
+process.on("SIGTERM", shutDownSequence);
+process.on("SIGKILL", shutDownSequence);
+process.on("beforeExit", shutDownSequence);
+
+printers.on("printerCountChange", (count) => {
+  console.log(`🖨️ Connected printers: ${count}`);
+  if (count > 0 && socketManager.status === "idle") {
+    // First time connecting sockets
+    void socketManager.connect();
+  } else if (count === 0 && socketManager.status === "connected") {
+    // No printers connected, disconnect sockets
+    socketManager.disconnectSockets();
+  } else if (count > 0 && socketManager.status === "disconnected") {
+    // Reconnect sockets if printers are connected
+    void socketManager.reconnect();
+  }
+});
+await printers.connect();

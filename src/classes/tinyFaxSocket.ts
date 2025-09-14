@@ -1,9 +1,5 @@
 import { env } from "../env";
-import {
-  zImageMessage,
-  type ImageMessage,
-  type MessageBody,
-} from "../types/message";
+import { type ImageMessage } from "../types/message";
 import type { Room } from "../types/room";
 import { send } from "../utils";
 import { TinyFaxPrinterManager } from "./tinyFaxPrinterManager";
@@ -62,7 +58,6 @@ export class TinyFaxSocket {
     this.socket.addEventListener("open", () => {
       this.isConnected = true;
       this.disconnectIntentional = false; // reset the disconnect flag
-      console.log(`🌐 Connected to chat room ${this.roomName}`);
 
       if (this.socket?.readyState === WebSocket.OPEN) {
         send({
@@ -137,12 +132,12 @@ export class TinyFaxSocket {
     });
   }
 
-  reconnect() {
+  async reconnect() {
     console.log("🔄 Reconnecting to chat server...");
     if (this.socket) {
       this.socket.close();
     }
-    this.connect();
+    await this.connect();
   }
 
   handleCommand(message: string): Boolean {

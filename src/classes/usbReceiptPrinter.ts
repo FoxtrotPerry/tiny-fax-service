@@ -1,23 +1,22 @@
 import { OutEndpoint, type Interface, usb } from "usb";
 import { DEVICE_PROFILES } from "../constants/deviceProfiles";
+import EventEmitter from "eventemitter3";
 
-/**
- * Class representing a TinyFax USB receipt printer.
- *
- * Needs to implement the following methods:
- * - connect(): Promise<void>
- * - disconnect(): void
- * - print(message: Uint8Array<ArrayBufferLike>): void
- */
+type UsbReceiptPrinterEvents = {
+  connected: () => void;
+  disconnected: () => void;
+  error: (error: Error) => void;
+  timeout: () => void;
+};
 
-export class UsbReceiptPrinter {
+export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
   private interface: Interface | null = null;
   private devices: usb.Device[] = [];
   private foundPrinterDevice: usb.Device | null = null;
   private foundPrinterProfile: (typeof DEVICE_PROFILES)[number] | null = null;
   private endpoint: OutEndpoint | null = null;
   private kernelDriverDetached = false;
-  status:
+  _status:
     | "idle"
     | "connecting"
     | "connected"
@@ -26,6 +25,7 @@ export class UsbReceiptPrinter {
     | "timeout" = "idle";
 
   constructor() {
+    super();
     usb.on("attach", (device) => {
       const matchingProfile = this.checkDevice(device);
       if (matchingProfile) {
@@ -35,14 +35,29 @@ export class UsbReceiptPrinter {
         this.connect();
       }
     });
+
+    usb.on("detach", (device) => {
+      if (
+        this.foundPrinterDevice &&
+        device.deviceAddress === this.foundPrinterDevice.deviceAddress
+      ) {
+        console.log("USB Printer unplugged. Performing cleanup...");
+        // this.foundPrinterDevice = null;
+        // this.foundPrinterProfile = null;
+        // this.endpoint = null;
+        // this.interface = null;
+        // this._status = "disconnected";
+        this.disconnect();
+      }
+    });
   }
 
-  async connect({
-    onConnected,
-  }: {
-    onConnected?: () => void;
-  } = {}) {
-    this.status = "connecting";
+  async connect() {
+    if (this._status === "connected") {
+      console.log("🖨️ Already connected to USB printer.");
+      return;
+    }
+    this._status = "connecting";
     this.devices = usb.getDeviceList();
 
     /*
@@ -59,7 +74,7 @@ export class UsbReceiptPrinter {
     }
 
     if (!this.foundPrinterDevice || !this.foundPrinterProfile) {
-      this.status = "error";
+      this._status = "error";
       console.error("❌ No known USB printers found.");
       return;
     }
@@ -73,7 +88,7 @@ export class UsbReceiptPrinter {
     this.interface = this.foundPrinterDevice.interfaces?.[0] ?? null;
 
     if (!this.interface) {
-      this.status = "error";
+      this._status = "error";
       this.foundPrinterDevice;
       console.error("❌ No interfaces found on printer.");
       return;
@@ -111,10 +126,8 @@ export class UsbReceiptPrinter {
       console.error("❌ Error during transfer: ", err);
     });
 
-    console.log("✅ Connected to USB printer.");
-
-    this.status = "connected";
-    onConnected?.();
+    this._status = "connected";
+    this.emit("connected");
   }
 
   async disconnect() {
@@ -131,7 +144,7 @@ export class UsbReceiptPrinter {
       return;
     }
 
-    console.log("Disconnecting from USB printer...");
+    console.log("🖨️ Disconnecting from USB printer...");
     this.endpoint.removeAllListeners("error");
     this.interface.release(true, (releaseError) => {
       if (releaseError) {
@@ -152,7 +165,7 @@ export class UsbReceiptPrinter {
     this.endpoint = null;
     this.foundPrinterDevice = null;
     this.kernelDriverDetached = false;
-    this.status = "disconnected";
+    this._status = "disconnected";
   }
 
   async print(message: Uint8Array<ArrayBufferLike>) {
@@ -180,5 +193,9 @@ export class UsbReceiptPrinter {
       }
     });
     return matchingProfile;
+  }
+
+  get status() {
+    return this._status;
   }
 }

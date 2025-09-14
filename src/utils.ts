@@ -38,5 +38,23 @@ export const getAdjustedImageDimensions = (
   };
 };
 
-export const wait = async (ms: number, retries: number) =>
-  new Promise((resolve) => setTimeout(resolve, ms * (retries + 1)));
+export const wait = async (ms: number, retries?: number) =>
+  new Promise((resolve) =>
+    setTimeout(resolve, retries ? ms * (retries + 1) : ms)
+  );
+
+export function debounce<Func extends (...args: any[]) => void>(
+  func: Func,
+  wait: number
+): (...args: Parameters<Func>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+
+  return (...args: Parameters<Func>) => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
+}

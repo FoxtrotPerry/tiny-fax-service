@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@canvas/image": "^2.0.0",
-    "@point-of-sale/network-receipt-printer": "2.0.0",
     "@point-of-sale/receipt-printer-encoder": "^3.0.3",
     "axios": "^1.9.0",
+    "eventemitter3": "^5.0.1",
     "usb": "^2.16.0",
     "zod": "^3.24.4"
   },
