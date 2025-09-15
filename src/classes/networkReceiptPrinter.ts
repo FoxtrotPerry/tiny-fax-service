@@ -168,9 +168,9 @@ class NetworkReceiptPrinter extends EventEmitter<NetworkReceiptPrinterEvents> {
   }
 
   scheduleConnectRetry() {
-    console.log(
-      `🛜 Waiting ${RETRY_WAIT_SECONDS}s to retry network printer connection...`
-    );
+    // console.log(
+    //   `🛜 Waiting ${RETRY_WAIT_SECONDS}s to retry network printer connection...`
+    // );
     setTimeout(async () => {
       await this.safeConnect();
     }, RETRY_WAIT_SECONDS * 1000);
