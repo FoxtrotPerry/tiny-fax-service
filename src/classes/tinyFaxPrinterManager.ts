@@ -29,33 +29,15 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
       this.networkPrinter = new NetworkReceiptPrinter({
         host,
         port,
-        timeout: 0,
       });
 
       this.networkPrinter.on("connected", () => {
-        console.log("🖨️ Connected to network printer!");
+        console.log("🛜 Connected to network printer!");
         this.emitPrinterCountChange();
       });
 
       this.networkPrinter.on("disconnected", () => {
-        // only trigger a reconnect if we were previously connected
-        if (this.networkPrinter?.status !== "connected") {
-          return;
-        }
-        console.log(
-          "❌ Network printer disconnected. Will attempt to reconnect..."
-        );
-        wait(2000).then(() => {
-          this.connectNetworkPrinter();
-        });
-      });
-
-      this.networkPrinter.on("error", (e) => {
-        console.error("❌ Printer connection error:", e);
-      });
-
-      this.networkPrinter.on("timeout", () => {
-        console.error("⌛️ Printer connection timed out");
+        this.emitPrinterCountChange();
       });
     }
     this.encoder = new ReceiptPrinterEncoder({
@@ -80,18 +62,18 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
       return;
     }
     if (this.networkPrinter?.status === "connected") {
-      console.log("🖨️  Already connected to a network printer.");
+      console.log("🛜 Already connected to a network printer.");
       return;
     }
     if (this.networkPrinter?.status === "connecting") {
-      console.log("⏳ Already connecting to network printer.");
+      console.log("🛜 Already connecting to network printer.");
       return;
     }
 
     try {
-      await this.networkPrinter.connect();
+      await this.networkPrinter.safeConnect();
     } catch (e) {
-      console.error("❌ Error connecting to network printer:", e);
+      // not being able to connect is an expected and acceptable outcome
       return;
     }
   }
@@ -102,11 +84,11 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
       return;
     }
     if (this.usbPrinter.status === "connected") {
-      console.log("🖨️  Already connected to a USB printer.");
+      console.log("🔌 Already connected to a USB printer.");
       return;
     }
     if (this.usbPrinter.status === "connecting") {
-      console.log("⏳ Already connecting to USB printer.");
+      console.log("🔌 Already connecting to USB printer.");
       return;
     }
 
@@ -121,18 +103,18 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
   disconnect() {
     if (this.networkPrinter) {
       this.networkPrinter.disconnect();
-      console.log("🖨️ Disconnected from network printer.");
+      console.log("🛜 Disconnected from network printer.");
     }
     if (this.usbPrinter) {
       this.usbPrinter.disconnect();
       this.usbPrinterStatus = "disconnected";
-      console.log("🖨️ Disconnected from USB printer.");
+      console.log("🔌 Disconnected from USB printer.");
     }
   }
 
   printInBox(message: string) {
     if (this.noneConnected) {
-      console.error("Cannot print, no printer is connected.");
+      console.error("❌ Cannot print, no printer is connected.");
       return;
     }
 
@@ -157,7 +139,7 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
 
   async print(message: string) {
     if (this.noneConnected) {
-      console.error("Cannot print, no printer is connected.");
+      console.error("❌ Cannot print, no printer is connected.");
       return;
     }
 
@@ -172,7 +154,7 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
 
   async printImageMessage({ image: imageURL, text }: ImageMessage) {
     if (this.networkPrinter?.status !== "connected") {
-      console.error("Cannot print, printer is not connected.");
+      console.error("❌ Cannot print, printer is not connected.");
       return;
     }
 
@@ -184,7 +166,7 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
       const imageData = getImageData(await imageFromBuffer(imageBuffer));
 
       if (!imageData) {
-        console.error("Failed to get image data from buffered image.");
+        console.error("❌ Failed to get image data from buffered image.");
         return;
       }
 

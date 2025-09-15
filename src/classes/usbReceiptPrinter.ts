@@ -1,4 +1,4 @@
-import { OutEndpoint, type Interface, usb } from "usb";
+import { OutEndpoint, type Interface, usb, InEndpoint } from "usb";
 import { DEVICE_PROFILES } from "../constants/deviceProfiles";
 import EventEmitter from "eventemitter3";
 
@@ -14,7 +14,8 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
   private devices: usb.Device[] = [];
   private foundPrinterDevice: usb.Device | null = null;
   private foundPrinterProfile: (typeof DEVICE_PROFILES)[number] | null = null;
-  private endpoint: OutEndpoint | null = null;
+  private outEndpoint: OutEndpoint | null = null;
+  private inEndpoint: InEndpoint | null = null;
   private kernelDriverDetached = false;
   _status:
     | "idle"
@@ -29,7 +30,7 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
     usb.on("attach", (device) => {
       const matchingProfile = this.checkDevice(device);
       if (matchingProfile) {
-        console.log("Matching printer profile found. Reconnecting...");
+        console.log("🔌 Matching printer profile found. Reconnecting...");
         this.foundPrinterDevice = device;
         this.foundPrinterProfile = matchingProfile;
         this.connect();
@@ -41,7 +42,7 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
         this.foundPrinterDevice &&
         device.deviceAddress === this.foundPrinterDevice.deviceAddress
       ) {
-        console.log("USB Printer unplugged. Performing cleanup...");
+        console.log("🔌 USB Printer unplugged. Performing cleanup...");
         // this.foundPrinterDevice = null;
         // this.foundPrinterProfile = null;
         // this.endpoint = null;
@@ -54,7 +55,7 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
 
   async connect() {
     if (this._status === "connected") {
-      console.log("🖨️ Already connected to USB printer.");
+      console.log("🔌 Already connected to USB printer.");
       return;
     }
     this._status = "connecting";
@@ -75,7 +76,7 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
 
     if (!this.foundPrinterDevice || !this.foundPrinterProfile) {
       this._status = "error";
-      console.error("❌ No known USB printers found.");
+      console.log("🔌 No known USB printers found.");
       return;
     }
 
@@ -95,7 +96,7 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
     }
 
     if (this.interface.isKernelDriverActive()) {
-      console.log("Detaching kernel driver...");
+      console.log("🔌 Detaching kernel driver...");
       try {
         this.interface.detachKernelDriver();
         this.kernelDriverDetached = true;
@@ -111,18 +112,17 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
      * GET THE ENDPOINT
      */
 
-    const endpoint = this.interface.endpoints.find(
-      (ep) => ep.direction === "out"
-    ) as OutEndpoint | undefined;
+    this.interface.endpoints.forEach((ep) => {
+      if (ep.direction === "out") this.outEndpoint = ep as OutEndpoint;
+      else if (ep.direction === "in") this.inEndpoint = ep as InEndpoint;
+    });
 
-    if (!endpoint) {
+    if (!this.outEndpoint) {
       console.error("❌ Could not find endpoint.");
       return;
     }
 
-    this.endpoint = endpoint;
-
-    this.endpoint.on("error", (err) => {
+    this.outEndpoint.on("error", (err) => {
       console.error("❌ Error during transfer: ", err);
     });
 
@@ -139,20 +139,20 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
       console.error("❌ No interface to disconnect.");
       return;
     }
-    if (this.endpoint === null) {
+    if (this.outEndpoint === null) {
       console.error("❌ No endpoint to disconnect.");
       return;
     }
 
-    console.log("🖨️ Disconnecting from USB printer...");
-    this.endpoint.removeAllListeners("error");
+    console.log("🔌 Disconnecting from USB printer...");
+    this.outEndpoint.removeAllListeners("error");
     this.interface.release(true, (releaseError) => {
       if (releaseError) {
         console.error("❌ Could not release interface: ", releaseError);
       }
       if (this.kernelDriverDetached) {
         try {
-          console.log("Re-attaching kernel driver...");
+          console.log("🔌 Re-attaching kernel driver...");
           this.interface?.attachKernelDriver();
         } catch (e) {
           console.error("❌ Could not re-attach kernel driver: ", e);
@@ -162,18 +162,18 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
     });
 
     this.interface = null;
-    this.endpoint = null;
+    this.outEndpoint = null;
     this.foundPrinterDevice = null;
     this.kernelDriverDetached = false;
     this._status = "disconnected";
   }
 
   async print(message: Uint8Array<ArrayBufferLike>) {
-    if (this.endpoint === null) {
+    if (this.outEndpoint === null) {
       console.error("❌ No endpoint to use for printing.");
       return;
     }
-    await this.endpoint.transferAsync(Buffer.from(message));
+    await this.outEndpoint.transferAsync(Buffer.from(message));
   }
 
   private checkDevice(device: usb.Device) {

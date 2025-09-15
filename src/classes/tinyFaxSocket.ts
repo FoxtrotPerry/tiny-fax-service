@@ -109,9 +109,9 @@ export class TinyFaxSocket {
         clearInterval(this.pingInterval);
         this.pingInterval = null;
       }
-      console.error("❌ Disconnected from chat server:");
-      console.error(`Code: ${event.code}`);
-      console.error(`Reason: ${event.reason}`);
+      // console.error("❌ Disconnected from chat server:");
+      // console.error(`Code: ${event.code}`);
+      // console.error(`Reason: ${event.reason}`);
       this.isConnected = false;
       if (!this.disconnectIntentional) {
         this.printers.printInBox(
@@ -158,7 +158,7 @@ export class TinyFaxSocket {
       this.disconnectIntentional = true;
       this.socket.close();
       this.isConnected = false;
-      console.log("⛓️‍💥 Socket disconnect successful.");
+      // console.log("⛓️‍💥 Socket disconnect successful.");
     }
   }
 

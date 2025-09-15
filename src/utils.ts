@@ -58,3 +58,9 @@ export function debounce<Func extends (...args: any[]) => void>(
     }, wait);
   };
 }
+
+export function getBit(binary: number, bitIndex: number): 0 | 1 {
+  const bitMask = 1 << bitIndex;
+  const result = bitMask & binary;
+  return (result >>> bitIndex) as 0 | 1;
+}
