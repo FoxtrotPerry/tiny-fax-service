@@ -158,7 +158,7 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
   }
 
   async printImageMessage({ image: imageURL, text }: ImageMessage) {
-    if (this.networkPrinter?.status !== "connected") {
+    if (this.noneConnected) {
       console.error("❌ Cannot print, printer is not connected.");
       return;
     }
@@ -209,7 +209,7 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
         .newline(9)
         .encode();
 
-      this.networkPrinter?.print(printerMessage);
+      this.broadcastPrint(printerMessage);
     } catch (e) {
       console.error("Error printing image", e);
       return;
