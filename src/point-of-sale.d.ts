@@ -1,28 +1,3 @@
-declare module "@point-of-sale/network-receipt-printer" {
-  export default class NetworkReceiptPrinter {
-    constructor(options?: ReceiptPrinterOptions);
-
-    addEventListener(
-      event: "connected" | "disconnected",
-      callback: (device: { type: "network" }) => void
-    );
-
-    addEventListener(event: "disconnected", callback: () => void);
-
-    connect();
-
-    print(data: any);
-
-    disconnect();
-  }
-
-  interface NetworkReceiptPrinterOptions {
-    host: `${string}.${string}.${string}.${string}`;
-    port: number;
-    // timeout?: number;
-  }
-}
-
 declare module "@point-of-sale/receipt-printer-encoder" {
   type PrinterModel =
     | "bixolon-srp350"
@@ -147,7 +122,7 @@ declare module "@point-of-sale/receipt-printer-encoder" {
     printerModel?: PrinterModel;
   }
 
-  export default class ReceiptPrinterEncoderClass {
+  export default class ReceiptPrinterEncoder {
     constructor(options?: ReceiptPrinterOptions);
 
     initialize(): ReceiptPrinterEncoder;

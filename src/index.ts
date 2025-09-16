@@ -1,5 +1,5 @@
 import { env } from "./env";
-import { TinyFaxPrinter } from "./classes/tinyFaxPrinter";
+import { TinyFaxPrinterManager } from "./classes/tinyFaxPrinterManager";
 import { getRooms } from "./getRooms";
 import { TinyFaxSocketManager } from "./classes/tinyFaxSocketManager";
 
@@ -38,7 +38,7 @@ const rooms = await getRooms(accessToken);
  * Connect to the chat server
  */
 
-const printer = new TinyFaxPrinter({
+const printers = new TinyFaxPrinterManager({
   host: printerIp,
   port: printerPort,
 });
@@ -46,7 +46,33 @@ const printer = new TinyFaxPrinter({
 const socketManager = new TinyFaxSocketManager({
   rooms,
   accessToken,
-  printer,
+  printers,
 });
 
-await socketManager.connect();
+const shutDownSequence = () => {
+  console.log(`\n🖨️ Shutting down...`);
+  printers.disconnect();
+  socketManager.disconnectSockets();
+  console.log("🗿 Goodbye from tiny-fax");
+  process.exit();
+};
+
+process.on("SIGINT", shutDownSequence);
+process.on("SIGTERM", shutDownSequence);
+process.on("SIGKILL", shutDownSequence);
+process.on("beforeExit", shutDownSequence);
+
+printers.on("printerCountChange", (count) => {
+  console.log(`🖨️ Connected printers: ${count}`);
+  if (count > 0 && socketManager.status === "idle") {
+    // First time connecting sockets
+    void socketManager.connect();
+  } else if (count === 0 && socketManager.status === "connected") {
+    // No printers connected, disconnect sockets
+    socketManager.disconnectSockets();
+  } else if (count > 0 && socketManager.status === "disconnected") {
+    // Reconnect sockets if printers are connected
+    void socketManager.reconnect();
+  }
+});
+await printers.connect();

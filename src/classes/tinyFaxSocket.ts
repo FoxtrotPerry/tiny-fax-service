@@ -1,19 +1,15 @@
 import { env } from "../env";
-import {
-  zImageMessage,
-  type ImageMessage,
-  type MessageBody,
-} from "../types/message";
+import { type ImageMessage } from "../types/message";
 import type { Room } from "../types/room";
 import { send } from "../utils";
-import { TinyFaxPrinter } from "./tinyFaxPrinter";
+import { TinyFaxPrinterManager } from "./tinyFaxPrinterManager";
 
 export class TinyFaxSocket {
   private roomName: string;
   private socket: WebSocket | null = null;
   private url: string;
   private accessToken: string;
-  private printer: TinyFaxPrinter;
+  private printers: TinyFaxPrinterManager;
   private pingInterval: NodeJS.Timer | null = null;
   private disconnectIntentional = false;
   private updateRoomsAndReconnect: () => void;
@@ -24,27 +20,27 @@ export class TinyFaxSocket {
     accessToken,
     printerIp,
     printerPort,
-    printer,
+    printers,
     updateRoomsAndReconnect,
   }: {
     room: Room;
     accessToken: string;
     printerIp?: string;
     printerPort?: number;
-    printer?: TinyFaxPrinter;
+    printers?: TinyFaxPrinterManager;
     updateRoomsAndReconnect: () => void;
   }) {
     this.url = `${env.TF_API_URL}/room/${room.id}`;
     this.roomName = room.name;
     this.accessToken = accessToken;
     this.updateRoomsAndReconnect = updateRoomsAndReconnect;
-    if (!printer && printerIp && printerPort) {
-      this.printer = new TinyFaxPrinter({
+    if (!printers && printerIp && printerPort) {
+      this.printers = new TinyFaxPrinterManager({
         host: printerIp,
         port: printerPort,
       });
-    } else if (printer && !printerIp && !printerPort) {
-      this.printer = printer;
+    } else if (printers && !printerIp && !printerPort) {
+      this.printers = printers;
     } else {
       throw new Error(
         "Either pass in printer, or printerIp and printerPort to the TinyFaxSocket constructor"
@@ -62,7 +58,6 @@ export class TinyFaxSocket {
     this.socket.addEventListener("open", () => {
       this.isConnected = true;
       this.disconnectIntentional = false; // reset the disconnect flag
-      console.log(`🌐 Connected to chat room ${this.roomName}`);
 
       if (this.socket?.readyState === WebSocket.OPEN) {
         send({
@@ -100,12 +95,12 @@ export class TinyFaxSocket {
       }
 
       if (typeof message !== "string") {
-        await this.printer.printImageMessage(message);
+        await this.printers.printImageMessage(message);
       } else {
         const commandHandled = this.handleCommand(event.data);
         // don't print command messages
         if (commandHandled) return;
-        this.printer.print(event.data);
+        this.printers.print(event.data);
       }
     });
 
@@ -114,12 +109,12 @@ export class TinyFaxSocket {
         clearInterval(this.pingInterval);
         this.pingInterval = null;
       }
-      console.error("❌ Disconnected from chat server:");
-      console.error(`Code: ${event.code}`);
-      console.error(`Reason: ${event.reason}`);
+      // console.error("❌ Disconnected from chat server:");
+      // console.error(`Code: ${event.code}`);
+      // console.error(`Reason: ${event.reason}`);
       this.isConnected = false;
       if (!this.disconnectIntentional) {
-        this.printer.printInBox(
+        this.printers.printInBox(
           `Disconnected from ${this.roomName}. Reconnecting in 5 seconds...`
         );
         setTimeout(() => {
@@ -137,12 +132,12 @@ export class TinyFaxSocket {
     });
   }
 
-  reconnect() {
+  async reconnect() {
     console.log("🔄 Reconnecting to chat server...");
     if (this.socket) {
       this.socket.close();
     }
-    this.connect();
+    await this.connect();
   }
 
   handleCommand(message: string): Boolean {
@@ -163,7 +158,7 @@ export class TinyFaxSocket {
       this.disconnectIntentional = true;
       this.socket.close();
       this.isConnected = false;
-      console.log("⛓️‍💥 Socket disconnect successful.");
+      // console.log("⛓️‍💥 Socket disconnect successful.");
     }
   }
 

@@ -1,6 +1,6 @@
 import { getRooms } from "../getRooms";
 import type { Room } from "../types/room";
-import { TinyFaxPrinter } from "./tinyFaxPrinter";
+import { TinyFaxPrinterManager } from "./tinyFaxPrinterManager";
 import { TinyFaxSocket } from "./tinyFaxSocket";
 
 /**
@@ -9,76 +9,76 @@ import { TinyFaxSocket } from "./tinyFaxSocket";
 export class TinyFaxSocketManager {
   private rooms: Room[];
   private accessToken: string;
-  private printer: TinyFaxPrinter;
+  private printers: TinyFaxPrinterManager;
   private sockets: TinyFaxSocket[] | null = null;
-  private status:
-    | "idle"
-    | "connecting"
-    | "connected"
-    | "disconnected"
-    | "refreshing" = "idle";
+  status: "idle" | "connecting" | "connected" | "disconnected" | "refreshing" =
+    "idle";
 
   constructor({
     rooms,
     accessToken,
-    printer,
+    printers,
   }: {
     rooms: Room[];
     accessToken: string;
-    printer: TinyFaxPrinter;
+    printers: TinyFaxPrinterManager;
   }) {
     this.rooms = rooms;
     this.accessToken = accessToken;
-    this.printer = printer;
+    this.printers = printers;
     this.sockets = rooms.map((room) => {
       return new TinyFaxSocket({
         room,
         accessToken,
-        printer,
+        printers,
         updateRoomsAndReconnect: this.updateRoomsAndReconnect.bind(this),
       });
     });
   }
 
-  async connect() {
-    if (this.status === "connected") {
-      console.log("🌐 Already connected to all rooms.");
-      return;
-    }
-    if (this.status === "connecting") {
-      console.log("🌐 Already connecting to all rooms.");
-      return;
-    }
-    this.status = "connecting";
-    // Connect to the printer first
-    await this.printer.connect();
-
-    if (this.printer.status !== "connected") {
-      console.error("❌ Printer connection failed.");
-      return;
-    }
-
-    // Connect to all WebSocket servers
+  async connectSockets() {
     if (this.sockets) {
       await Promise.all(
-        this.sockets.map(async (socket) => {
-          await socket.connect();
-        })
+        this.sockets.map(async (socket) => await socket.connect())
       );
       this.status = "connected";
       this.printConnectedRooms();
     }
   }
 
+  async connect() {
+    if (this.status === "connected") {
+      console.log("🌐 Already connected to available rooms.");
+      return;
+    }
+    if (this.status === "connecting") {
+      console.log("🌐 Already connecting to available rooms.");
+      return;
+    }
+
+    console.log("🌐 Connecting to available rooms...");
+    await this.connectSockets();
+  }
+
+  async reconnect() {
+    if (this.status === "connecting") {
+      return;
+    }
+    this.status = "connecting";
+    console.log("🌐 Reconnecting to all rooms...");
+    // Reconnect to the printers first
+    await this.connectSockets();
+  }
+
   public async updateRoomsAndReconnect() {
     if (this.status === "refreshing") {
-      console.log("🌐 Already refreshing rooms.");
+      console.log("🌐 Already updating rooms.");
       return;
     }
     this.status = "refreshing";
-    console.log("🌐 Refreshing rooms...");
-    if (this.printer.status === "connected") {
-      this.printer.printInBox(
+    console.log("🌐 Updating rooms...");
+    if (this.printers.anyConnected) {
+      this.printers.printInBox(
         "Updating room connections, disconnecting from all rooms..."
       );
     }
@@ -94,7 +94,7 @@ export class TinyFaxSocketManager {
       return new TinyFaxSocket({
         room,
         accessToken: this.accessToken,
-        printer: this.printer,
+        printers: this.printers,
         updateRoomsAndReconnect: this.updateRoomsAndReconnect.bind(this),
       });
     });
@@ -106,7 +106,7 @@ export class TinyFaxSocketManager {
       );
       this.status = "connected";
       console.log("🌐 Refreshed rooms successfully.");
-      if (this.printer.status === "connected") {
+      if (this.printers.anyConnected) {
         this.printConnectedRooms();
       }
     } else {
@@ -114,9 +114,26 @@ export class TinyFaxSocketManager {
     }
   }
 
+  disconnectSockets() {
+    if (this.sockets) {
+      console.log("🌐 Disconnecting from all rooms...");
+      this.sockets.forEach((socket) => {
+        socket?.disconnect();
+        socket?.destroy();
+      });
+      this.status = "disconnected";
+      console.log("🌐 Disconnected from all rooms.");
+    }
+  }
+
   private printConnectedRooms() {
-    if (this.printer.status === "connected") {
-      this.printer.printInBox(
+    if (this.printers.anyConnected) {
+      console.table(
+        this.rooms.map((room) => ({
+          "Connected rooms:": room.name,
+        }))
+      );
+      this.printers.printInBox(
         `Connected to ${this.rooms.length} rooms: ${this.rooms
           .map((room) => room.name)
           .join(", ")}`
