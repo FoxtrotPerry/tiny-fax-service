@@ -31,7 +31,7 @@
     "compile:refresh:macos": "bun build --compile --minify --target=bun-darwin-arm64 ./src/refresh.ts --outfile ./dist/bin/tf_refresh",
     "copy": "mkdir -p dist/setup/ && bun copy:wasm && bun copy:usb && cp -f -rL setup/systemd/* dist/setup/ && cp -f .env.default dist/bin/.env",
     "copy:wasm": "rsync -a --include='*/' --include='*.wasm' --exclude='*' node_modules/@cwasm dist/setup/node_modules",
-    "copy:usb": "rsync -a --include='*/' --include='*.node' --exclude='*' node_modules/usb/prebuilds/linux-* dist/setup/node_modules/usb/prebuilds",
+    "copy:usb": "mkdir -p dist/setup/node_modules/usb/prebuilds || rsync -a --include='*/' --include='*.node' node_modules/usb/prebuilds/linux-* dist/setup/node_modules/usb/prebuilds",
     "chmod": "chmod +x dist/bin/* dist/**/*.sh dist/setup/node_modules/@cwasm/**/*.wasm",
     "cleanup": "rm -rf dist & rm -rf dist_node_modules & rm tiny-fax-service.tar.gz",
     "tar": "rm tiny-fax-service.tar.gz & tar -czvf tiny-fax-service.tar.gz dist/*",
