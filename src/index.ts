@@ -53,7 +53,7 @@ const shutDownSequence = () => {
   console.log(`\n🖨️ Shutting down...`);
   printers.disconnect();
   socketManager.disconnectSockets();
-  console.log("👋 Exiting");
+  console.log("🗿 Goodbye from tiny-fax");
   process.exit();
 };
 

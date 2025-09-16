@@ -18,11 +18,22 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
   private networkPrinter?: NetworkReceiptPrinter;
   private usbPrinter: UsbReceiptPrinter;
   private encoder: ReceiptPrinterEncoder;
-  usbPrinterStatus: Status = "idle";
 
   constructor(networkArgs?: { host: string; port: number }) {
     super();
     this.usbPrinter = new UsbReceiptPrinter();
+    this.usbPrinter.on("disconnected", () => {
+      this.emitPrinterCountChange();
+    });
+    this.usbPrinter.on("connected", () => {
+      this.emitPrinterCountChange();
+    });
+    this.usbPrinter.on("error", () => {
+      this.emitPrinterCountChange();
+    });
+    this.usbPrinter.on("timeout", () => {
+      this.emitPrinterCountChange();
+    });
     if (networkArgs) {
       const { host, port } = networkArgs;
 
@@ -50,7 +61,7 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
     if (this.networkPrinter && this.networkPrinter?.status !== "connected") {
       connectingPrinters.push(this.connectNetworkPrinter());
     }
-    if (this.usbPrinter && this.usbPrinterStatus !== "connected") {
+    if (this.usbPrinter && this.usbPrinter.status !== "connected") {
       connectingPrinters.push(this.connectUsbPrinter());
     }
     await Promise.all(connectingPrinters);
@@ -92,11 +103,6 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
       return;
     }
 
-    this.usbPrinter.on("connected", () => {
-      this.usbPrinterStatus = "connected";
-      this.emitPrinterCountChange();
-    });
-
     await this.usbPrinter.connect();
   }
 
@@ -107,7 +113,6 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
     }
     if (this.usbPrinter) {
       this.usbPrinter.disconnect();
-      this.usbPrinterStatus = "disconnected";
       console.log("🔌 Disconnected from USB printer.");
     }
   }
@@ -215,7 +220,7 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
     if (this.networkPrinter?.status === "connected") {
       this.networkPrinter?.print(message);
     }
-    if (this.usbPrinterStatus === "connected") {
+    if (this.usbPrinter.status === "connected") {
       this.usbPrinter?.print(message);
     }
   }
@@ -223,21 +228,21 @@ export class TinyFaxPrinterManager extends EventEmitter<PrinterManagerEvents> {
   get anyConnected() {
     return (
       this.networkPrinter?.status === "connected" ||
-      this.usbPrinterStatus === "connected"
+      this.usbPrinter.status === "connected"
     );
   }
 
   get noneConnected() {
     return (
       this.networkPrinter?.status !== "connected" &&
-      this.usbPrinterStatus !== "connected"
+      this.usbPrinter.status !== "connected"
     );
   }
 
   get connectedCount() {
     let count = 0;
     if (this.networkPrinter?.status === "connected") count++;
-    if (this.usbPrinterStatus === "connected") count++;
+    if (this.usbPrinter.status === "connected") count++;
     return count;
   }
 

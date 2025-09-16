@@ -30,7 +30,10 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
     usb.on("attach", (device) => {
       const matchingProfile = this.checkDevice(device);
       if (matchingProfile) {
-        console.log("🔌 Matching printer profile found. Reconnecting...");
+        console.log(
+          "🔌 Matching printer profile found. Attempting connection..."
+        );
+        // FIXME: We perform this same assignment early on in connect(). Reduce duplication.
         this.foundPrinterDevice = device;
         this.foundPrinterProfile = matchingProfile;
         this.connect();
@@ -42,15 +45,12 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
         this.foundPrinterDevice &&
         device.deviceAddress === this.foundPrinterDevice.deviceAddress
       ) {
-        console.log("🔌 USB Printer unplugged. Performing cleanup...");
-        // this.foundPrinterDevice = null;
-        // this.foundPrinterProfile = null;
-        // this.endpoint = null;
-        // this.interface = null;
-        // this._status = "disconnected";
+        console.log("🔌 USB printer unplugged. Performing cleanup...");
         this.disconnect();
       }
     });
+
+    console.log("🔌 Listening for new usb connections...");
   }
 
   async connect() {
@@ -166,6 +166,7 @@ export class UsbReceiptPrinter extends EventEmitter<UsbReceiptPrinterEvents> {
     this.foundPrinterDevice = null;
     this.kernelDriverDetached = false;
     this._status = "disconnected";
+    this.emit("disconnected");
   }
 
   async print(message: Uint8Array<ArrayBufferLike>) {

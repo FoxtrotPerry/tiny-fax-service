@@ -67,7 +67,6 @@ export class TinyFaxSocketManager {
     this.status = "connecting";
     console.log("🌐 Reconnecting to all rooms...");
     // Reconnect to the printers first
-    this.disconnectSockets();
     await this.connectSockets();
   }
 

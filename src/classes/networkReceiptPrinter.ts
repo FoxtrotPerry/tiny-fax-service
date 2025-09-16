@@ -43,6 +43,10 @@ class NetworkReceiptPrinter extends EventEmitter<NetworkReceiptPrinterEvents> {
     };
 
     this.heartbeat = new Heartbeat();
+
+    console.log(
+      `🛜 Looking for printers on ${this.options.host}:${this.options.port}`
+    );
   }
 
   private heartbeatCallback: HeartbeatCallback = (late) => {
@@ -63,6 +67,10 @@ class NetworkReceiptPrinter extends EventEmitter<NetworkReceiptPrinterEvents> {
     }
   };
 
+  private startHeartbeat() {
+    this.heartbeat.start(this.heartbeatCallback);
+  }
+
   async connect(): Promise<void> {
     if (this._status === "connected" || this._status === "connecting") {
       console.log("🛜 Already connected to network printer.");
@@ -81,7 +89,7 @@ class NetworkReceiptPrinter extends EventEmitter<NetworkReceiptPrinterEvents> {
               this._status = "connected";
               this.socket = socket;
               this.heartbeat.beat();
-              this.heartbeat.start(this.heartbeatCallback);
+              this.startHeartbeat();
               this.emit("connected");
               resolve();
             },
