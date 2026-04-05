@@ -10,9 +10,10 @@ export class TinyFaxSocket {
   private url: string;
   private accessToken: string;
   private printers: TinyFaxPrinterManager;
-  private pingInterval: NodeJS.Timer | null = null;
+  private pingInterval: NodeJS.Timeout | null = null;
   private disconnectIntentional = false;
   private updateRoomsAndReconnect: () => void;
+  private reconnectCadence: number = 5000;
   isConnected = false;
 
   constructor({
@@ -43,7 +44,7 @@ export class TinyFaxSocket {
       this.printers = printers;
     } else {
       throw new Error(
-        "Either pass in printer, or printerIp and printerPort to the TinyFaxSocket constructor"
+        "Either pass in printer, or printerIp and printerPort to the TinyFaxSocket constructor",
       );
     }
   }
@@ -70,18 +71,21 @@ export class TinyFaxSocket {
         });
       }
 
-      this.pingInterval = setInterval(() => {
-        if (this.socket?.readyState === WebSocket.OPEN) {
-          send({
-            socket: this.socket,
-            payload: {
-              action: "ping",
-              message: "What it do council",
-              userId: "",
-            },
-          });
-        }
-      }, 1000 * 60 * 5); // every 5 minutes
+      this.pingInterval = setInterval(
+        () => {
+          if (this.socket?.readyState === WebSocket.OPEN) {
+            send({
+              socket: this.socket,
+              payload: {
+                action: "ping",
+                message: "What it do council",
+                userId: "",
+              },
+            });
+          }
+        },
+        1000 * 60 * 5,
+      );
     });
 
     this.socket.addEventListener("message", async (event) => {
@@ -109,18 +113,19 @@ export class TinyFaxSocket {
         clearInterval(this.pingInterval);
         this.pingInterval = null;
       }
-      // console.error("❌ Disconnected from chat server:");
-      // console.error(`Code: ${event.code}`);
-      // console.error(`Reason: ${event.reason}`);
-      this.isConnected = false;
       if (!this.disconnectIntentional) {
-        this.printers.printInBox(
-          `Disconnected from ${this.roomName}. Reconnecting in 5 seconds...`
-        );
+        if (!this.isConnected) {
+          // only print the reconnect message if we were previously connected
+          // to avoid printing on all subsequent reconnect attempts
+          this.printers.printInBox(
+            `Disconnected from ${this.roomName}. Attempting to reconnect...`,
+          );
+        }
         setTimeout(() => {
           this.reconnect();
-        }, 5000);
+        }, this.reconnectCadence);
       }
+      this.isConnected = false;
     });
 
     this.socket.addEventListener("error", (err) => {
